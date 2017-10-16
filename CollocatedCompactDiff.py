@@ -11,8 +11,8 @@ import numpy as np
 import time as tm
 
 #Bring in functions we need
-from PeriodicCompactSchemes import CollocatedDeriv
-from PeriodicCompactSchemes import CompactFilter
+from CompactSchemes import CollocatedDeriv
+from CompactSchemes import CompactFilter
 
 #Plotting Libraries
 import matplotlib.pyplot as plt
@@ -55,15 +55,15 @@ deriv = CollocatedDeriv(N,dx,bcType)
 filt  = CompactFilter(N,alphaF,bcType)
 
 #Fluid properties
-gamma = 1.4;
-Pr = 0.7;
-p_ref   = 1/gamma;
-rho_ref = 1.0;
-T_ref   = 1.0;
-mu_ref   = 0.00001;
+gamma = 1.4
+Pr = 0.7
+p_ref   = 1/gamma
+rho_ref = 1.0
+T_ref   = 1.0
+mu_ref   = 0.00001
 
-R_gas = p_ref/rho_ref/T_ref;
-cp = R_gas*gamma/(gamma-1.0);
+R_gas = p_ref/rho_ref/T_ref
+cp = R_gas*gamma/(gamma-1.0)
 
 #Sponge Properties
 spongeAvgT     = 10.0
@@ -138,12 +138,12 @@ while done == False:
         sos   = np.sqrt(gamma*p0/rho0)
         
         if bcX0 == "ADIABATIC_WALL":
-            T1[0]  = calcNeumann0(T1)
+            T1[0]  = deriv.calcNeumann0(T1)
             U1[0]  = 0.0
             rhoU1[0]  = 0.0
             
         if bcX1 == "ADIABATIC_WALL":
-            T1[-1] = calcNeumannEnd(T1)
+            T1[-1] = deriv.calcNeumannEnd(T1)
             U1[-1] = 0.0
             rhoU1[-1] = 0.0
 
@@ -168,13 +168,13 @@ while done == False:
     if bcX0 == "ADIABATIC_WALL":
         U1[0]  = 0.0
         rhoU1[0]  = 0.0
-        T1[0]  = calcNeumann0(T1)
+        T1[0]  = deriv.calcNeumann0(T1)
         p1[0]  = T1[0]*rho1[0]*R_gas
         
     if bcX1 == "ADIABATIC_WALL":
         U1[-1] = 0.0
         rhoU1[-1] = 0.0
-        T1[-1] = calcNeumannEnd(T1)
+        T1[-1] = deriv.calcNeumannEnd(T1)
         p1[-1] = T1[-1]*rho1[-1]*R_gas
       
         
@@ -229,13 +229,13 @@ while done == False:
     if bcX0 == "ADIABATIC_WALL":
         U1[0]  = 0.0
         rhoUk[0]  = 0.0
-        T1[0]  = calcNeumann0(T1)
+        T1[0]  = deriv.calcNeumann0(T1)
         p1[0]  = T1[0]*rhok[0]*R_gas
         
     if bcX1 == "ADIABATIC_WALL":
         U1[-1] = 0.0
         rhoUk[-1] = 0.0
-        T1[-1] = calcNeumannEnd(T1)
+        T1[-1] = deriv.calcNeumannEnd(T1)
         p1[-1] = T1[-1]*rhok[-1]*R_gas
        
     
@@ -274,13 +274,13 @@ while done == False:
     if bcX0 == "ADIABATIC_WALL":
         U1[0]  = 0.0
         rhoUk[0]  = 0.0
-        T1[0]  = calcNeumann0(T1)
+        T1[0]  = deriv.calcNeumann0(T1)
         p1[0]  = T1[0]*rhok[0]*R_gas
         
     if bcX1 == "ADIABATIC_WALL":
         U1[-1] = 0.0
         rhoUk[-1] = 0.0
-        T1[-1] = calcNeumannEnd(T1)
+        T1[-1] = deriv.calcNeumannEnd(T1)
         p1[-1] = T1[-1]*rhok[-1]*R_gas
        
     
@@ -339,13 +339,13 @@ while done == False:
     if bcX0 == "ADIABATIC_WALL":
         U1[0]  = 0.0
         rhoUk[0]  = 0.0
-        T1[0]  = calcNeumann0(T1)
+        T1[0]  = deriv.calcNeumann0(T1)
         p1[0]  = T1[0]*rhok[0]*R_gas
         
     if bcX1 == "ADIABATIC_WALL":
         U1[-1] = 0.0
         rhoUk[-1] = 0.0
-        T1[-1] = calcNeumannEnd(T1)
+        T1[-1] = deriv.calcNeumannEnd(T1)
         p1[-1] = T1[-1]*rhok[-1]*R_gas
        
 

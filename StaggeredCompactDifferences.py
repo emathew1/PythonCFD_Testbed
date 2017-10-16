@@ -11,9 +11,9 @@ import numpy as np
 import time as tm
 
 #Bring in functions we need
-from PeriodicCompactSchemes import StaggeredInterp
-from PeriodicCompactSchemes import StaggeredDeriv
-from PeriodicCompactSchemes import CompactFilter
+from CompactSchemes import StaggeredInterp
+from CompactSchemes import StaggeredDeriv
+from CompactSchemes import CompactFilter
 
 #Plotting Libraries
 import matplotlib.pyplot as plt
