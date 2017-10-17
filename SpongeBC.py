@@ -12,7 +12,7 @@ class SpongeBC:
     def __init__(self, N, x, L, idealGas, bcX0, bcX1):
         self.N = N
         
-        self.spongeAvgT     = 1.0
+        self.spongeAvgT     = 10.0
         self.spongeEpsP     = 0.005
         self.spongeP        = 1/idealGas.gamma
         self.spongeStrength = 2
@@ -30,7 +30,7 @@ class SpongeBC:
                     self.spongeSigma[i] = self.spongeStrength * (0.068*(spongeX)**2 
                                + 0.845*(spongeX)**8)   
                     
-        if self.bcX1 == "SPONGE":
+        if bcX1 == "SPONGE":
             for i in range(self.N):
                 if x[i] > L - self.spongeLength:
                     spongeX = (x[i]-(L-self.spongeLength))/self.spongeLength

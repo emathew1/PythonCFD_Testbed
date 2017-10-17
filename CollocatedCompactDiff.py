@@ -42,8 +42,8 @@ dx = x[1]-x[0]
 
 #Set the boundary conditions
 bcType = "PERIODIC"
-bcX1 = "ADIABATIC_WALL"
-bcX0 = "ADIABATIC_WALL"
+bcX1 = "PERIODIC"
+bcX0 = "PERIODIC"
 
 if bcX0 == "SPONGE" or bcX1 == "SPONGE":
     spongeFlag = 1

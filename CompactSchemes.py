@@ -351,6 +351,34 @@ class CollocatedDeriv:
     def compact1stDeriv(self,f): return spsparlin.spsolve(self.LH1D,spspar.csr_matrix.dot(self.RH1D,f))
     def compact2ndDeriv(self,f): return spsparlin.spsolve(self.LH2D,spspar.csr_matrix.dot(self.RH2D,f))
 
+    def calcNeumann0(self,f):
+        #6th order...
+        alpha = 147
+        a0 = 360
+        a1 = -450
+        a2 = 400
+        a3 = -225
+        a4 = 72
+        a5 = -10
+        
+        f0 = (a0*f[1] + a1*f[2] + a2*f[3] + a3*f[4] + a4*f[5] + a5*f[6])/alpha
+        
+        return f0
+
+    def calcNeumannEnd(self,f):
+        #6th order...
+        alpha = 147
+        a0 = 360
+        a1 = -450
+        a2 = 400
+        a3 = -225
+        a4 = 72
+        a5 = -10
+        
+        fend = (a0*f[-2] + a1*f[-3] + a2*f[-4] + a3*f[-5] + a4*f[-6] + a5*f[-7])/alpha
+        
+        return fend
+
 
 ###################
 ###################
@@ -517,32 +545,4 @@ class CompactFilter:
         self.RHF = RHF.tocsr()
     
     def compactFilter(self,f): return spsparlin.spsolve(self.LHF,spspar.csr_matrix.dot(self.RHF,f))
-
-    def calcNeumann0(f):
-        #6th order...
-        alpha = 147
-        a0 = 360
-        a1 = -450
-        a2 = 400
-        a3 = -225
-        a4 = 72
-        a5 = -10
-        
-        f0 = (a0*f[1] + a1*f[2] + a2*f[3] + a3*f[4] + a4*f[5] + a5*f[6])/alpha
-        
-        return f0
-
-    def calcNeumannEnd(f):
-        #6th order...
-        alpha = 147
-        a0 = 360
-        a1 = -450
-        a2 = 400
-        a3 = -225
-        a4 = 72
-        a5 = -10
-        
-        fend = (a0*f[-2] + a1*f[-3] + a2*f[-4] + a3*f[-5] + a4*f[-6] + a5*f[-7])/alpha
-        
-        return fend
     

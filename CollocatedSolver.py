@@ -22,6 +22,7 @@ class Domain:
         self.N = N
         self.x = x
         self.L = L
+        self.dx = x[1]-x[0]
         
 class BC:
     
@@ -49,6 +50,7 @@ class CSolver:
         self.N = domain.N
         self.x = domain.x
         self.L = domain.L
+        self.dx = domain.dx
         
         #gas properties
         self.idealGas = IdealGas(mu_ref)
@@ -174,22 +176,22 @@ class CSolver:
             self.U[0]  = 0.0
             rhoU[0]    = 0.0
             self.T[0]  = self.deriv.calcNeumann0(self.T)
-            self.p[0]  = self.idealGas.calcPIdealGas(rho[0],self.T[0])
+            self.p[0]  = self.idealGas.solvePIdealGas(rho[0],self.T[0])
         
         if self.bcX1 == "ADIABATIC_WALL":
             self.U[-1] = 0.0
             rhoU[-1] = 0.0
             self.T[-1] = self.deriv.calcNeumannEnd(self.T)
-            self.p[-1] = self.idealGas.calcPIdealGas(rho[-1],self.T[-1])
+            self.p[-1] = self.idealGas.solvePIdealGas(rho[-1],self.T[-1])
     
     def solveContinuity(self, rho, rhoU, rhoE):
         self.rhok2  = (-self.dt*self.deriv.compact1stDeriv(rhoU) +
                                      self.calcSpongeSource(rho,"CONT"))
         
     def solveXMomentum(self, rho, rhoU, rhoE):
-        self.rhoUk2 = (-self.dt*(self.deriv.compact1stDeriv(self.rhoU*self.U + self.p) -
+        self.rhoUk2 = (-self.dt*(self.deriv.compact1stDeriv(rhoU*self.U + self.p) -
                                       (4/3)*self.mu*self.deriv.compact2ndDeriv(self.U)) +
-                                      self.calcSpongeSource(self.rhoU,"XMOM"))
+                                      self.calcSpongeSource(rhoU,"XMOM"))
     
     def solveEnergy(self, rho, rhoU, rhoE):
         self.rhoEk2 = (-self.dt*(self.deriv.compact1stDeriv(rhoE*self.U + self.U*self.p) -
@@ -221,8 +223,8 @@ class CSolver:
     def updateConservedData(self,rkStep):
         if rkStep == 1:
             self.rho2  = self.rho1 + self.rhok2/6
-            self.rhoU2 = self.rhoU2 + self.rhoUk2/6
-            self.rhoE2 = self.rhoE2 + self.rhoEk2/6
+            self.rhoU2 = self.rhoU1 + self.rhoUk2/6
+            self.rhoE2 = self.rhoE1 + self.rhoEk2/6
         elif rkStep == 2:
             self.rho2  += self.rhok2/3
             self.rhoU2 += self.rhoUk2/3
@@ -249,7 +251,7 @@ class CSolver:
             self.rhoUk = self.rhoU1 + self.rhoUk2
             self.rhoEk = self.rhoE1 + self.rhoEk2
             
-    def updateNonPrimative(self,rkStep):
+    def updateNonConservedData(self,rkStep):
         if rkStep == 1 or rkStep == 2 or rkStep == 3:
             self.U = self.rhoUk/self.rhok
             self.p = (self.idealGas.gamma-1)*(self.rhoEk - 
@@ -288,35 +290,39 @@ class CSolver:
         
             
     def updateSponge(self):
-        eps = 1.0/(self.spongeBC.spongeAvgT/self.dt+1.0)
-        self.spongeBC.spongeRhoAvg  += eps*(self.rho1  - self.spongeBC.spongeRhoAvg)
-        self.spongeBC.spongeRhoUAvg += eps*(self.rhoU1 - self.spongeBC.spongeRhoUAvg)
-        self.spongeBC.spongeRhoEAvg += eps*(self.rhoE1 - self.spongeBC.spongeRhoEAvg)
-        self.spongeBC.spongeRhoEAvg = (self.spongeBC.spongeEpsP*self.spongeBC.spongeRhoEAvg + 
-            (1.0 - self.spongeBC.spongeEpsP)*(self.spongeBC.spongeP/(self.spongeBC.gamma-1) + 
-             0.5*(self.spongeBC.spongeRhoUAvg**2)/self.spongeBC.spongeRhoAvg))
-        
-        if self.bcX0 == "SPONGE":
-            self.rho1[0]   = self.spongeBC.spongeRhoAvg[0]
-            self.rhoU1[0]  = self.spongeBC.spongeRhoUAvg[0]
-            self.rhoE1[0]  = self.spongeBC.spongeRhoEAvg[0]
+        if self.spongeFlag == 1:
+            eps = 1.0/(self.spongeBC.spongeAvgT/self.dt+1.0)
+            self.spongeBC.spongeRhoAvg  += eps*(self.rho1  - self.spongeBC.spongeRhoAvg)
+            self.spongeBC.spongeRhoUAvg += eps*(self.rhoU1 - self.spongeBC.spongeRhoUAvg)
+            self.spongeBC.spongeRhoEAvg += eps*(self.rhoE1 - self.spongeBC.spongeRhoEAvg)
+            self.spongeBC.spongeRhoEAvg = (self.spongeBC.spongeEpsP*self.spongeBC.spongeRhoEAvg + 
+                (1.0 - self.spongeBC.spongeEpsP)*(self.spongeBC.spongeP/(self.idealGas.gamma-1) + 
+                 0.5*(self.spongeBC.spongeRhoUAvg**2)/self.spongeBC.spongeRhoAvg))
             
-        if self.bcX1 == "SPONGE": 
-            self.rho1[-1]  = self.spongeBC.spongeRhoAvg[-1]
-            self.rhoU1[-1] = self.spongeBC.spongeRhoUAvg[-1]
-            self.rhoE1[-1] = self.spongeBC.spongeRhoEAvg[-1]
+            if self.bcX0 == "SPONGE":
+                self.rho1[0]   = self.spongeBC.spongeRhoAvg[0]
+                self.rhoU1[0]  = self.spongeBC.spongeRhoUAvg[0]
+                self.rhoE1[0]  = self.spongeBC.spongeRhoEAvg[0]
+                
+            if self.bcX1 == "SPONGE": 
+                self.rho1[-1]  = self.spongeBC.spongeRhoAvg[-1]
+                self.rhoU1[-1] = self.spongeBC.spongeRhoUAvg[-1]
+                self.rhoE1[-1] = self.spongeBC.spongeRhoEAvg[-1]
     
     def plotFigure(self):
         plt.plot(self.x,self.rho1)
-        plt.axis([0, self.L, 0.995, 1.005])
+        plt.axis([0, self.L, 0.95, 1.05])
 
     def checkSolution(self):
+        
+        print(self.timeStep)
+        
         #Check if we've hit the end of the timestep condition
-        if self.timeStep > self.maxTimeStep:
+        if self.timeStep >= self.maxTimeStep:
             self.done = True
     
         #Check if we've hit the end of the max time condition
-        if self.time > self.maxTime:
+        if self.time >= self.maxTime:
             self.done = True
             
         if(self.timeStep%self.plotStep == 0):
