@@ -28,8 +28,8 @@ class IdealGas:
     def solvePIdealGas(self, rho, T):
         return T*rho*self.R_gas
     
-    def solvePPrimative(self, rho, rhoU, rhoE):
-        return (self.gamma-1)*(rhoE - 0.5*rhoU*rhoU/rho)
+    def solvePPrimative(self, rho, rhoU, rhoV, rhoE):
+        return (self.gamma-1)*(rhoE - 0.5*(rhoU*rhoU + rhoV*rhoV)/rho)
     
     def solveMu(self,T):
         return self.mu_ref*(T/self.T_ref)**0.76

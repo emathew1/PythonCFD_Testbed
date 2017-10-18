@@ -13,8 +13,6 @@ from CollocatedSolver import BC2D
 from CollocatedSolver import TimeStepping
 from CollocatedSolver import CSolver2D
 
-from CompactSchemes import CollocatedDeriv
-
 plt.ion()
 
 #Domain information
@@ -28,12 +26,12 @@ domain = Domain2D(Nx, Ny, x, y, Lx, Ly)
 [X, Y] = np.meshgrid(x,y)
 
 #Boundary Condition information
-bcXType = "PERIODIC"
-bcX0 = "PERIODIC"
-bcX1 = "PERIODIC"
-bcYType = "PERIODIC"
-bcY0 = "PERIODIC"
-bcY1 = "PERIODIC"
+bcXType = "DIRICHLET"
+bcX0 = "SPONGE"
+bcX1 = "SPONGE"
+bcYType = "DIRICHLET"
+bcY0 = "SPONGE"
+bcY1 = "SPONGE"
 bc = BC2D(bcXType, bcX0, bcX1, bcYType, bcY0, bcY1)
 
 #Time stepping information
@@ -52,7 +50,7 @@ mu_ref = 0.00000001
 
 
 ##Create our solver object
-#csolver = CSolver2d(domain, bc, timestepping, alphaF, mu_ref)
+csolver = CSolver2D(domain, bc, timestepping, alphaF, mu_ref)
 #
 #
 ##Allocate initial condition variables we need

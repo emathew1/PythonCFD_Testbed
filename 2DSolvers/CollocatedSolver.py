@@ -56,48 +56,63 @@ class CSolver2D:
         self.done = False
         
         #grid info
-        self.N = domain.N
+        self.Nx = domain.Nx
         self.x = domain.x
-        self.L = domain.L
+        self.Lx = domain.Lx
         self.dx = domain.dx
+        
+        self.Ny = domain.Ny
+        self.y = domain.y
+        self.Ly = domain.Ly
+        self.dy = domain.dy
         
         #gas properties
         self.idealGas = IdealGas(mu_ref)
         
         #BC info
-        self.bcType = bc.bcType
+        self.bcXType = bc.bcXType
         self.bcX0 = bc.bcX0
         self.bcX1 = bc.bcX1
         
+        self.bcYType = bc.bcYType
+        self.bcY0 = bc.bcY0
+        self.bcY1 = bc.bcY1
+        
         #initial conditions
-        self.U0   = np.zeros(self.N)
-        self.rho0 = np.zeros(self.N)
-        self.p0   = np.zeros(self.N)
+        self.U0   = np.zeros((self.Nx, self.Ny))
+        self.V0   = np.zeros((self.Nx, self.Ny))
+        self.rho0 = np.zeros((self.Nx, self.Ny))
+        self.p0   = np.zeros((self.Nx, self.Ny))
         
         #non-primative data
-        self.U   = np.zeros(self.N)
-        self.T   = np.zeros(self.N)
-        self.p   = np.zeros(self.N)
-        self.mu  = np.zeros(self.N)
-        self.k   = np.zeros(self.N)
-        self.sos = np.zeros(self.N)
+        self.U   = np.zeros((self.Nx, self.Ny))
+        self.V   = np.zeros((self.Nx, self.Ny))
+        self.T   = np.zeros((self.Nx, self.Ny))
+        self.p   = np.zeros((self.Nx, self.Ny))
+        self.mu  = np.zeros((self.Nx, self.Ny))
+        self.k   = np.zeros((self.Nx, self.Ny))
+        self.sos = np.zeros((self.Nx, self.Ny))
         
         #primative data
-        self.rho1  = np.zeros(self.N)
-        self.rhoU1 = np.zeros(self.N)
-        self.rhoE1 = np.zeros(self.N)
+        self.rho1  = np.zeros((self.Nx, self.Ny))
+        self.rhoU1 = np.zeros((self.Nx, self.Ny))
+        self.rhoV1 = np.zeros((self.Nx, self.Ny))
+        self.rhoE1 = np.zeros((self.Nx, self.Ny))
         
-        self.rhok  = np.zeros(self.N)
-        self.rhoUk = np.zeros(self.N)
-        self.rhoEk = np.zeros(self.N)
+        self.rhok  = np.zeros((self.Nx, self.Ny))
+        self.rhoUk = np.zeros((self.Nx, self.Ny))
+        self.rhoVk = np.zeros((self.Nx, self.Ny))
+        self.rhoEk = np.zeros((self.Nx, self.Ny))
 
-        self.rhok2  = np.zeros(self.N)
-        self.rhoUk2 = np.zeros(self.N)
-        self.rhoEk2 = np.zeros(self.N)        
+        self.rhok2  = np.zeros((self.Nx, self.Ny))
+        self.rhoUk2 = np.zeros((self.Nx, self.Ny))
+        self.rhoVk2 = np.zeros((self.Nx, self.Ny))       
+        self.rhoEk2 = np.zeros((self.Nx, self.Ny))        
         
-        self.rho2  = np.zeros(self.N)
-        self.rhoU2 = np.zeros(self.N)
-        self.rhoE2 = np.zeros(self.N)
+        self.rho2  = np.zeros((self.Nx, self.Ny))
+        self.rhoU2 = np.zeros((self.Nx, self.Ny))
+        self.rhoV2 = np.zeros((self.Nx, self.Ny))
+        self.rhoE2 = np.zeros((self.Nx, self.Ny))
         
         #time data
         self.timeStep = 0
@@ -113,14 +128,18 @@ class CSolver2D:
         
         if self.bcX0 == "SPONGE" or self.bcX1 == "SPONGE":
             self.spongeFlag = 1
-            self.spongeBC = SpongeBC(self.N, self.x, self.L, self.idealGas, self.bcX0, self.bcX1)
+            self.spongeBC = SpongeBC2D(domain, self.idealGas, bc)
         else:
             self.spongeFlag = 0
         
-        #Generate our derivatives and our filter    
-        self.deriv = CollocatedDeriv(self.N,self.dx,self.bcType)
-        self.filt  = CompactFilter(self.N,self.alphaF,self.bcType)
-                      
+        #Generate our derivatives and our filters    
+        self.derivX = CollocatedDeriv(self.Nx,self.dx,self.bcXType,"X")
+        self.derivY = CollocatedDeriv(self.Ny,self.dy,self.bcYType,"Y")
+        
+        self.filtX  = CompactFilter(self.Nx,self.alphaF,self.bcXType,"X")
+        self.filtY  = CompactFilter(self.Ny,self.alphaF,self.bcYType,"Y")
+              
+        
     def setInitialConditions(self, rho0, U0, p0):
         self.rho0 = rho0
         self.U0 = U0

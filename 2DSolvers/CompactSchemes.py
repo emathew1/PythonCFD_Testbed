@@ -405,11 +405,12 @@ class CollocatedDeriv:
 
 class CompactFilter:
 
-    def __init__(self, N, alphaF, typeBC):
+    def __init__(self, N, alphaF, typeBC, dir):
         self.N = N
         self.alphaF = alphaF
         self.typeBC = typeBC        
         self.createFilterMatrices()
+        self.dir = dir
 
     
     def createFilterMatrices(self):
@@ -562,4 +563,13 @@ class CompactFilter:
         self.RHF = RHF.tocsr()
     
     def compactFilter(self,f): return spsparlin.spsolve(self.LHF,spspar.csr_matrix.dot(self.RHF,f))
+    
+    
+    def filt_2D(self,f): 
+        if self.dir == "X":
+            return self.compactFilter(f.transpose()).transpose()
+        elif self.dir == "Y":
+            return self.compactFilter(f)
+        else:
+            print("Unknown direction")
     
