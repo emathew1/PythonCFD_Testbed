@@ -284,67 +284,110 @@ class CSolver2D:
     def postStepBCHandling(self, rho, rhoU, rhoV, rhoE):
         if self.bcType == "DIRICHLET":
             if self.bcX0 == "ADIABATIC_WALL":
-                rho[0]   = rho[0]
-                rhoU[0]  = 0
-                rhoE[0]  = rhoE[0]
+                rho[0,:] = -self.dt*self.derivX.compact1stDeriv(rhoU)[0,:]
+                rhoU[0,:]  = 0
+                rhoV[0,:]  = 0
+                rhoE[0,:]  = (-self.dt*(self.derivX.compact1stDeriv(rhoE*self.U + self.U*self.p) -
+                                      (self.mu/self.idealGas.Pr/(self.idealGas.gamma-1))*self.derivX.compact2ndDeriv(self.T) +
+                                      (4/3)*self.mu*self.U*self.derivX.compact2ndDeriv(self.U)))[0,:]
             else:
-                rho[0]   = 0
-                rhoU[0]  = 0
-                rhoE[0]  = 0
+                rho[0,:]   = 0
+                rhoU[0,:]  = 0
+                rhoV[0,:]  = 0
+                rhoE[0,:]  = 0
+                
+            if self.bcY0 == "ADIABATIC_WALL":
+                rho[:,0] = -self.dt*self.derivY.compact1stDeriv(rhoV)[:,0]
+                rhoU[:,0]  = 0
+                rhoV[:,0]  = 0
+                rhoE[:,0]  = (-self.dt*(self.derivY.compact1stDeriv(rhoE*self.V + self.V*self.p) -
+                                      (self.mu/self.idealGas.Pr/(self.idealGas.gamma-1))*self.derivY.compact2ndDeriv(self.T) +
+                                      (4/3)*self.mu*self.V*self.derivY.compact2ndDeriv(self.V)))[:,0]
+            else:
+                rho[:,0]   = 0
+                rhoU[:,0]  = 0
+                rhoV[:,0]  = 0
+                rhoE[:,0]  = 0
                 
             if self.bcX1 == "ADIABATIC_WALL":
-                rho[-1]  = rho[-1]
-                rhoU[-1] = 0
-                rhoE[-1] = rhoE[-1]
+                rho[-1,:]  = -self.dt*self.derivX.compact1stDeriv(rhoU)[-1,:]
+                rhoU[-1,:] = 0
+                rhoV[-1,:] = 0
+                rhoE[-1,:] = (-self.dt*(self.derivX.compact1stDeriv(rhoE*self.U + self.U*self.p) -
+                                      (self.mu/self.idealGas.Pr/(self.idealGas.gamma-1))*self.derivX.compact2ndDeriv(self.T) +
+                                      (4/3)*self.mu*self.U*self.derivX.compact2ndDeriv(self.U)))[-1,:]
             else:
                 rho[-1]  = 0
                 rhoU[-1] = 0
+                rhoV[-1] = 0
                 rhoE[-1] = 0  
+                
+            if self.bcY1 == "ADIABATIC_WALL":
+                rho[:,-1]  = -self.dt*self.derivY.compact1stDeriv(rhoV)[:,-1]
+                rhoU[:,-1] = 0
+                rhoV[:,-1] = 0
+                rhoE[:,-1]  = (-self.dt*(self.derivY.compact1stDeriv(rhoE*self.V + self.V*self.p) -
+                                      (self.mu/self.idealGas.Pr/(self.idealGas.gamma-1))*self.derivY.compact2ndDeriv(self.T) +
+                                      (4/3)*self.mu*self.V*self.derivY.compact2ndDeriv(self.V)))[:,-1]
+            else:
+                rho[:,-1]   = 0
+                rhoU[:,-1]  = 0
+                rhoV[:,-1]  = 0
+                rhoE[:,-1]  = 0
     
     def updateConservedData(self,rkStep):
         if rkStep == 1:
             self.rho2  = self.rho1 + self.rhok2/6
             self.rhoU2 = self.rhoU1 + self.rhoUk2/6
+            self.rhoV2 = self.rhoV1 + self.rhoVk2/6
             self.rhoE2 = self.rhoE1 + self.rhoEk2/6
         elif rkStep == 2:
             self.rho2  += self.rhok2/3
             self.rhoU2 += self.rhoUk2/3
+            self.rhoV2 += self.rhoVk2/3            
             self.rhoE2 += self.rhoEk2/3          
         elif rkStep == 3:
             self.rho2  += self.rhok2/3
             self.rhoU2 += self.rhoUk2/3
+            self.rhoV2 += self.rhoVk2/3
             self.rhoE2 += self.rhoEk2/3               
         elif rkStep == 4:
             self.rho2  += self.rhok2/6
             self.rhoU2 += self.rhoUk2/6
+            self.rhoV2 += self.rhoVk2/6
             self.rhoE2 += self.rhoEk2/6
 
         if rkStep == 1:
             self.rhok  = self.rho1  + self.rhok2/2
             self.rhoUk = self.rhoU1 + self.rhoUk2/2
+            self.rhoVk = self.rhoV1 + self.rhoVk2/2
             self.rhoEk = self.rhoE1 + self.rhoEk2/2
         elif rkStep == 2:
             self.rhok  = self.rho1  + self.rhok2/2
             self.rhoUk = self.rhoU1 + self.rhoUk2/2
+            self.rhoVk = self.rhoV1 + self.rhoVk2/2
             self.rhoEk = self.rhoE1 + self.rhoEk2/2
         elif rkStep == 3:
             self.rhok  = self.rho1  + self.rhok2
             self.rhoUk = self.rhoU1 + self.rhoUk2
+            self.rhoVk = self.rhoV1 + self.rhoVk2
             self.rhoEk = self.rhoE1 + self.rhoEk2
             
     def updateNonConservedData(self,rkStep):
         if rkStep == 1 or rkStep == 2 or rkStep == 3:
             self.U = self.rhoUk/self.rhok
+            self.V = self.rhoVk/self.rhok
             self.p = (self.idealGas.gamma-1)*(self.rhoEk - 
-                         0.5*self.rhoUk*self.rhoUk/self.rhok)
+                         0.5*(self.rhoUk*self.rhoUk + self.rhoVk*self.rhoVk)/self.rhok)
             self.T = (self.p/(self.rhok*self.idealGas.R_gas))   
             self.mu = self.idealGas.mu_ref*(self.T/self.idealGas.T_ref)**0.76
             self.k  = self.idealGas.cp*self.mu/self.idealGas.Pr
             self.sos   = np.sqrt(self.idealGas.gamma*self.p/self.rhok)
         elif rkStep == 4:
             self.U = self.rhoU1/self.rho1
+            self.V = self.rhoV1/self.rho1
             self.p = (self.idealGas.gamma-1)*(self.rhoE1 - 
-                         0.5*self.rhoU1*self.rhoU1/self.rho1)
+                         0.5*(self.rhoU1*self.rhoU1 + self.rhoV1*self.rhoV1)/self.rho1)
             self.T = (self.p/(self.rho1*self.idealGas.R_gas))   
             self.mu = self.idealGas.mu_ref*(self.T/self.idealGas.T_ref)**0.76
             self.k  = self.idealGas.cp*self.mu/self.idealGas.Pr
@@ -352,21 +395,45 @@ class CSolver2D:
             
     def filterPrimativeValues(self):
         if(self.timeStep%self.filterStep == 0):
-            self.rho1  = self.filt.compactFilter(self.rho2)
-            self.rhoU1 = self.filt.compactFilter(self.rhoU2)
-            self.rhoE1 = self.filt.compactFilter(self.rhoE2)
+            #Need to flip the order of the filtering every other time
+            self.rho1  = self.filtX.compactFilter(self.rho2)
+            self.rhoU1 = self.filtX.compactFilter(self.rhoU2)
+            self.rhoV1 = self.filtX.compactFilter(self.rhoV2)
+            self.rhoE1 = self.filtX.compactFilter(self.rhoE2)
+            
+            self.rho1  = self.filtY.compactFilter(self.rho1)
+            self.rhoU1 = self.filtY.compactFilter(self.rhoU1)
+            self.rhoV1 = self.filtY.compactFilter(self.rhoV1)
+            self.rhoE1 = self.filtY.compactFilter(self.rhoE1)
+            
             print("Filtering...")
         
-        if self.bcType == "DIRICHLET":
-            self.rho1[0]   = self.rho2[0]
-            self.rho1[-1]  = self.rho2[-1]
-            self.rhoU1[0]  = self.rhoU2[0]
-            self.rhoU1[-1] = self.rhoU2[-1]
-            self.rhoE1[0]  = self.rhoE2[0]
-            self.rhoE1[-1] = self.rhoE2[-1]
+            #Is there something here that needs to be done about corners for
+            #DIRICHLET/DIRICHLET, PERIODIC/DIRICHLET?
+            if self.bcXType == "DIRICHLET":
+                self.rho1[0,:]   = self.rho2[0,:]
+                self.rho1[-1,:]  = self.rho2[-1,:]
+                self.rhoU1[0,:]  = self.rhoU2[0,:]
+                self.rhoU1[-1,:] = self.rhoU2[-1,:]
+                self.rhoV1[0,:]  = self.rhoV2[0,:]
+                self.rhoV1[-1,:] = self.rhoV2[-1,:]            
+                self.rhoE1[0,:]  = self.rhoE2[0,:]
+                self.rhoE1[-1,:] = self.rhoE2[-1,:]
+            
+            if self.bcYType == "DIRICHLET":
+                self.rho1[:,0]   = self.rho2[:,0]
+                self.rho1[:,-1]  = self.rho2[:,-1]
+                self.rhoU1[:,0]  = self.rhoU2[:,0]
+                self.rhoU1[:,-1] = self.rhoU2[:,-1]
+                self.rhoV1[:,0]  = self.rhoV2[:,0]
+                self.rhoV1[:,-1] = self.rhoV2[:,-1]            
+                self.rhoE1[:,0]  = self.rhoE2[:,0]
+                self.rhoE1[:,-1] = self.rhoE2[:,-1]           
+            
         else:
             self.rho1  = self.rho2
             self.rhoU1 = self.rhoU2
+            self.rhoV1 = self.rhoV2
             self.rhoE1 = self.rhoE2
         
             
