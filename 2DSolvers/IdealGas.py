@@ -19,8 +19,8 @@ class IdealGas:
         self.R_gas = self.p_ref/self.rho_ref/self.T_ref
         self.cp = self.R_gas*self.gamma/(self.gamma-1.0)
 
-    def solveRhoE(self,rho,U,p):
-        return p/(self.gamma-1) + (1/2)*rho*U*U
+    def solveRhoE(self,rho,U,V,p):
+        return p/(self.gamma-1) + (1/2)*rho*(U*U + V*V)
     
     def solveT(self,rho, p):
         return p/(rho*self.R_gas)

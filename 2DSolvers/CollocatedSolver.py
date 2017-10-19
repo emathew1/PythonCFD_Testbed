@@ -84,7 +84,7 @@ class CSolver2D:
         self.rho0 = np.zeros((self.Nx, self.Ny))
         self.p0   = np.zeros((self.Nx, self.Ny))
         
-        #non-primative data
+        #non-conserved data
         self.U   = np.zeros((self.Nx, self.Ny))
         self.V   = np.zeros((self.Nx, self.Ny))
         self.T   = np.zeros((self.Nx, self.Ny))
@@ -93,7 +93,7 @@ class CSolver2D:
         self.k   = np.zeros((self.Nx, self.Ny))
         self.sos = np.zeros((self.Nx, self.Ny))
         
-        #primative data
+        #conserved data
         self.rho1  = np.zeros((self.Nx, self.Ny))
         self.rhoU1 = np.zeros((self.Nx, self.Ny))
         self.rhoV1 = np.zeros((self.Nx, self.Ny))
@@ -126,11 +126,11 @@ class CSolver2D:
         self.filterStep = timeStepping.filterStep
         self.alphaF = alphaF
         
-        if self.bcX0 == "SPONGE" or self.bcX1 == "SPONGE":
-            self.spongeFlag = 1
+        if self.bcX0 == "SPONGE" or self.bcX1 == "SPONGE" or self.bcY0 == "SPONGE" or self.bcY1 == "SPONGE":
+            self.spongeFlag = True
             self.spongeBC = SpongeBC2D(domain, self.idealGas, bc)
         else:
-            self.spongeFlag = 0
+            self.spongeFlag = False
         
         #Generate our derivatives and our filters    
         self.derivX = CollocatedDeriv(self.Nx,self.dx,self.bcXType,"X")
@@ -140,57 +140,81 @@ class CSolver2D:
         self.filtY  = CompactFilter(self.Ny,self.alphaF,self.bcYType,"Y")
               
         
-    def setInitialConditions(self, rho0, U0, p0):
+    def setInitialConditions(self, rho0, U0, V0, p0):
         self.rho0 = rho0
         self.U0 = U0
+        self.V0 = V0
         self.p0 = p0
         
         self.U     = U0
+        self.V     = V0
         self.rho1  = rho0
         self.p     = p0
         self.rhoU1 = rho0*U0
-        self.rhoE1 = self.idealGas.solveRhoE(rho0,U0,p0)
+        self.rhoV1 = rho0*V0
+        self.rhoE1 = self.idealGas.solveRhoE(rho0,U0,V0,p0)
         self.T     = self.idealGas.solveT(rho0, p0)
         self.mu    = self.idealGas.solveMu(self.T)
         self.k     = self.idealGas.solveK(self.mu)
         self.sos   = self.idealGas.solveSOS(self.rho1, self.p)
         
         if self.bcX0 == "ADIABATIC_WALL":
-            self.T[0]  = self.deriv.calcNeumann0(self.T)
-            self.U[0]  = 0.0
-            self.rhoU1[0]  = 0.0
+            self.T[0,:]  = self.derivX.calcNeumann0(self.T)
+            self.U[0,:]  = 0.0
+            self.rhoU1[0,:]  = 0.0
+            self.V[0,:]  = 0.0
+            self.rhoV1[0,:]  = 0.0
             
         if self.bcX1 == "ADIABATIC_WALL":
-            self.T[-1] = self.deriv.calcNeumannEnd(self.T)
-            self.U[-1] = 0.0
-            self.rhoU1[-1] = 0.0
+            self.T[-1,:] = self.derivX.calcNeumannEnd(self.T)
+            self.U[-1,:] = 0.0
+            self.rhoU1[-1,:] = 0.0
+            self.V[-1,:] = 0.0
+            self.rhoV1[-1,:] = 0.0
+            
+        if self.bcY0 == "ADIABATIC_WALL":
+            self.T[:,0]  = self.derivY.calcNeumann0(self.T)
+            self.U[:,0]  = 0.0
+            self.rhoU1[:,0]  = 0.0
+            self.V[:,0]  = 0.0
+            self.rhoV1[:,0]  = 0.0
+            
+        if self.bcY1 == "ADIABATIC_WALL":
+            self.T[:,-1]  = self.derivY.calcNeumannEnd(self.T)
+            self.U[:,-1]  = 0.0
+            self.rhoU1[:,-1]  = 0.0
+            self.V[:,-1]  = 0.0
+            self.rhoV1[:,-1]  = 0.0       
 
-        if self.bcX0 == "ADIABATIC_WALL" or self.bcX1 == "ADIABATIC_WALL":
+        if self.bcX0 == "ADIABATIC_WALL" or self.bcX1 == "ADIABATIC_WALL" or self.bcY0 == "ADIABATIC_WALL" or self.bcY1 == "ADIABATIC_WALL":
             self.p     = self.idealGas.solvePIdealGas(self.rho1, self.T)
             self.sos   = self.idealGas.solveSOS(self.rho1, self.p)
-            self.rhoE1 = self.idealGas.solveRhoE(self.rho1, self.U, self.p)            
+            self.rhoE1 = self.idealGas.solveRhoE(self.rho1, self.U, self.V, self.p)            
             
-        if self.bcX0 == "SPONGE" or self.bcX1 == "SPONGE": 
+        if self.spongeFlag == True: 
             self.spongeBC.spongeRhoAvg  = self.rho1
             self.spongeBC.spongeRhoUAvg = self.rhoU1
+            self.spongeBC.spongeRhoVAvg = self.rhoV1            
             self.spongeBC.spongeRhoEAvg = self.rhoE1
         
     def calcDtFromCFL(self):
-        UChar = np.fabs(self.U) + self.sos
-        self.dt   = np.min(self.CFL*self.dx/UChar)
+        UChar_dx = (np.fabs(self.U) + self.sos)/self.dx + (np.fabs(self.V) + self.sos)/self.dy
+        
+        self.dt   = np.min(self.CFL/UChar_dx)
         
         #Increment timestep
         self.timeStep += 1
         self.time += self.dt
 
-
         
     def calcSpongeSource(self,f,eqn):
-        if self.spongeFlag == 1:
+        if self.spongeFlag == True:
             if eqn == "CONT":
                 source = self.spongeBC.spongeSigma*(self.spongeBC.spongeRhoAvg-f)
             elif eqn == "XMOM":
-                source = self.spongeBC.spongeSigma*(self.spongeBC.spongeRhoUAvg-f)                
+                source = self.spongeBC.spongeSigma*(self.spongeBC.spongeRhoUAvg-f)     
+            elif eqn == "YMOM":
+                source = self.spongeBC.spongeSigma*(self.spongeBC.spongeRhoVAvg-f)     
             elif eqn == "ENGY":
                 source = self.spongeBC.spongeSigma*(self.spongeBC.spongeRhoEAvg-f)
             else:
@@ -199,36 +223,65 @@ class CSolver2D:
             source = 0
         return source
     
-    def preStepBCHandling(self, rho, rhoU, rhoE):
+    def preStepBCHandling(self, rho, rhoU, rhoV, rhoE):
         if self.bcX0 == "ADIABATIC_WALL":
-            self.U[0]  = 0.0
-            rhoU[0]    = 0.0
-            self.T[0]  = self.deriv.calcNeumann0(self.T)
-            self.p[0]  = self.idealGas.solvePIdealGas(rho[0],self.T[0])
+            self.U[0,:]  = 0.0
+            rhoU[0,:]    = 0.0
+            self.V[0,:]  = 0.0
+            rhoV[0,:]    = 0.0
+            self.T[0,:]  = self.derivX.calcNeumann0(self.T)
+            self.p[0,:]  = self.idealGas.solvePIdealGas(rho[0,:],self.T[0,:])
         
         if self.bcX1 == "ADIABATIC_WALL":
-            self.U[-1] = 0.0
-            rhoU[-1] = 0.0
-            self.T[-1] = self.deriv.calcNeumannEnd(self.T)
-            self.p[-1] = self.idealGas.solvePIdealGas(rho[-1],self.T[-1])
+            self.U[-1,:] = 0.0
+            rhoU[-1,:]   = 0.0
+            self.V[-1,:] = 0.0
+            rhoV[-1,:]   = 0.0
+            self.T[-1,:] = self.derivX.calcNeumannEnd(self.T)
+            self.p[-1,:] = self.idealGas.solvePIdealGas(rho[-1,:],self.T[-1,:])
+
+        if self.bcY0 == "ADIABATIC_WALL":
+            self.U[:,0]  = 0.0
+            rhoU[:,0]    = 0.0
+            self.V[:,0]  = 0.0
+            rhoV[:,0]    = 0.0
+            self.T[:,0]  = self.derivY.calcNeumann0(self.T)
+            self.p[:,0]  = self.idealGas.solvePIdealGas(rho[:,0],self.T[:,0])
     
-    def solveContinuity(self, rho, rhoU, rhoE):
+        if self.bcY1 == "ADIABATIC_WALL":
+            self.U[:,-1]  = 0.0
+            rhoU[:,-1]    = 0.0
+            self.V[:,-1]  = 0.0
+            rhoV[:,-1]    = 0.0
+            self.T[:,-1]  = self.derivY.calcNeumannEnd(self.T)
+            self.p[:,-1]  = self.idealGas.solvePIdealGas(rho[:,-1],self.T[:,-1])
+    
+    
+    #Left off here...
+    
+    def solveContinuity(self, rho, rhoU, rhoV, rhoE):
         self.rhok2  = (-self.dt*self.deriv.compact1stDeriv(rhoU) +
                                      self.calcSpongeSource(rho,"CONT"))
         
-    def solveXMomentum(self, rho, rhoU, rhoE):
+    def solveXMomentum(self, rho, rhoU, rhoV, rhoE):
         self.rhoUk2 = (-self.dt*(self.deriv.compact1stDeriv(rhoU*self.U + self.p) -
                                       (4/3)*self.mu*self.deriv.compact2ndDeriv(self.U)) +
                                       self.calcSpongeSource(rhoU,"XMOM"))
+
+    def solveYMomentum(self, rho, rhoU, rhoV, rhoE):
+        self.rhoUk2 = (-self.dt*(self.deriv.compact1stDeriv(rhoU*self.U + self.p) -
+                                      (4/3)*self.mu*self.deriv.compact2ndDeriv(self.U)) +
+                                      self.calcSpongeSource(rhoU,"YMOM"))
     
-    def solveEnergy(self, rho, rhoU, rhoE):
+    def solveEnergy(self, rho, rhoU, rhoV, rhoE):
         self.rhoEk2 = (-self.dt*(self.deriv.compact1stDeriv(rhoE*self.U + self.U*self.p) -
                                       (self.mu/self.idealGas.Pr/(self.idealGas.gamma-1))*self.deriv.compact2ndDeriv(self.T) +
                                       (4/3)*self.mu*self.U*self.deriv.compact2ndDeriv(self.U)) +
                                       self.calcSpongeSource(rhoE,"ENGY"))
     
     
-    def postStepBCHandling(self, rho, rhoU, rhoE):
+    #Be sure to handle corner of mesh for the different combinations of periodic dirichlet boundaries...
+    def postStepBCHandling(self, rho, rhoU, rhoV, rhoE):
         if self.bcType == "DIRICHLET":
             if self.bcX0 == "ADIABATIC_WALL":
                 rho[0]   = rho[0]
@@ -318,7 +371,7 @@ class CSolver2D:
         
             
     def updateSponge(self):
-        if self.spongeFlag == 1:
+        if self.spongeFlag == True:
             eps = 1.0/(self.spongeBC.spongeAvgT/self.dt+1.0)
             self.spongeBC.spongeRhoAvg  += eps*(self.rho1  - self.spongeBC.spongeRhoAvg)
             self.spongeBC.spongeRhoUAvg += eps*(self.rhoU1 - self.spongeBC.spongeRhoUAvg)

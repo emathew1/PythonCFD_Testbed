@@ -36,6 +36,7 @@ class SpongeBC2D:
         self.spongeSigma   = np.zeros((self.Nx, self.Ny))
         self.spongeRhoAvg  = np.zeros((self.Nx, self.Ny))
         self.spongeRhoUAvg = np.zeros((self.Nx, self.Ny))
+        self.spongeRhoVAvg = np.zeros((self.Nx, self.Ny))
         self.spongeRhoEAvg = np.zeros((self.Nx, self.Ny))
         
         if self.bcX0 == "SPONGE":           
@@ -53,6 +54,7 @@ class SpongeBC2D:
                     for j in range(self.Ny):
                         self.spongeSigma[i,j] = max(self.spongeStrength*(0.068*(spongeX)**2 
                                + 0.845*(spongeX)**8), self.spongeSigma[i,j]) 
+                        
         if self.bcY0 == "SPONGE":           
             for j in range(self.Ny):
                 if self.y[j] < self.spongeLengthY:
