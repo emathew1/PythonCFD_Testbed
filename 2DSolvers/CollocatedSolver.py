@@ -27,7 +27,12 @@ class Domain2D:
         self.Ny = Ny
         self.y = y
         self.Ly = Ly
-        self.dy = y[1]-y[0]        
+        self.dy = y[1]-y[0]  
+        
+        [X, Y] = np.meshgrid(x,y)
+        
+        self.X = X
+        self.Y = Y
         
 class BC2D:
     
@@ -66,6 +71,9 @@ class CSolver2D:
         self.Ly = domain.Ly
         self.dy = domain.dy
         
+        self.X = domain.X
+        self.Y = domain.Y
+        
         #gas properties
         self.idealGas = IdealGas(mu_ref)
         
@@ -93,6 +101,12 @@ class CSolver2D:
         self.k   = np.zeros((self.Nx, self.Ny))
         self.sos = np.zeros((self.Nx, self.Ny))
         
+        #Derivatives of Data
+        self.Ux  = np.zeros((self.Nx, self.Ny))
+        self.Uy  = np.zeros((self.Nx, self.Ny))
+        self.Vx  = np.zeros((self.Nx, self.Ny))
+        self.Vy  = np.zeros((self.Nx, self.Ny))
+
         #conserved data
         self.rho1  = np.zeros((self.Nx, self.Ny))
         self.rhoU1 = np.zeros((self.Nx, self.Ny))
@@ -196,6 +210,11 @@ class CSolver2D:
             self.spongeBC.spongeRhoUAvg = self.rhoU1
             self.spongeBC.spongeRhoVAvg = self.rhoV1            
             self.spongeBC.spongeRhoEAvg = self.rhoE1
+            
+        self.Ux = self.derivX.df_2D(self.U)
+        self.Vx = self.derivX.df_2D(self.V)
+        self.Uy = self.derivY.df_2D(self.U)
+        self.Vy = self.derivY.df_2D(self.V)        
         
     def calcDtFromCFL(self):
         UChar_dx = (np.fabs(self.U) + self.sos)/self.dx + (np.fabs(self.V) + self.sos)/self.dy
@@ -256,84 +275,114 @@ class CSolver2D:
             self.T[:,-1]  = self.derivY.calcNeumannEnd(self.T)
             self.p[:,-1]  = self.idealGas.solvePIdealGas(rho[:,-1],self.T[:,-1])
     
+    def preStepDerivatives(self):
+        self.Ux = self.derivX.df_2D(self.U)
+        self.Vx = self.derivX.df_2D(self.V)
+        self.Uy = self.derivY.df_2D(self.U)
+        self.Vy = self.derivY.df_2D(self.V) 
     
     #Left off here...
     
     def solveContinuity(self, rho, rhoU, rhoV, rhoE):
-        self.rhok2  = (-self.dt*self.deriv.compact1stDeriv(rhoU) +
-                                     self.calcSpongeSource(rho,"CONT"))
+        
+        drho = (-self.derivX.df_2D(rhoU) - self.derivY.df_2D(rhoV))
+        
+        self.rhok2  = self.dt*(drho + self.calcSpongeSource(rho,"CONT"))
+        
+        
         
     def solveXMomentum(self, rho, rhoU, rhoV, rhoE):
-        self.rhoUk2 = (-self.dt*(self.deriv.compact1stDeriv(rhoU*self.U + self.p) -
-                                      (4/3)*self.mu*self.deriv.compact2ndDeriv(self.U)) +
-                                      self.calcSpongeSource(rhoU,"XMOM"))
+        drhoU = (-self.derivX.df_2D(rhoU*self.U + self.p +
+                                    -2*self.mu*self.Ux + (2/3)*self.mu*(self.Ux + self.Vy)) +
+                                         -self.derivY.df_2D(rhoU*self.V -
+                                        self.mu*(self.Vx + self.Uy)))
+    
+        self.rhoUk2 = self.dt*(drhoU + self.calcSpongeSource(rhoU,"XMOM"))
 
     def solveYMomentum(self, rho, rhoU, rhoV, rhoE):
-        self.rhoUk2 = (-self.dt*(self.deriv.compact1stDeriv(rhoU*self.U + self.p) -
-                                      (4/3)*self.mu*self.deriv.compact2ndDeriv(self.U)) +
-                                      self.calcSpongeSource(rhoU,"YMOM"))
+        
+        drhoV = (-self.derivY.df_2D(rhoV*self.V + self.p +
+                                    -2*self.mu*self.Vy + (2/3)*self.mu*(self.Ux + self.Vy))
+                                         -self.derivX.df_2D(rhoV*self.U -
+                                        self.mu*(self.Vx + self.Uy)) )  
+        
+        self.rhoVk2 = self.dt*(drhoV + self.calcSpongeSource(rhoV,"YMOM"))
     
     def solveEnergy(self, rho, rhoU, rhoV, rhoE):
-        self.rhoEk2 = (-self.dt*(self.deriv.compact1stDeriv(rhoE*self.U + self.U*self.p) -
-                                      (self.mu/self.idealGas.Pr/(self.idealGas.gamma-1))*self.deriv.compact2ndDeriv(self.T) +
-                                      (4/3)*self.mu*self.U*self.deriv.compact2ndDeriv(self.U)) +
-                                      self.calcSpongeSource(rhoE,"ENGY"))
+        drhoE = (-self.derivX.df_2D(rhoE*self.U + self.U*self.p
+                    - (self.mu/self.idealGas.Pr/(self.idealGas.gamma-1))*self.derivX.df_2D(self.T) + 
+                     - self.U*(2*self.mu*self.Ux - (2/3)*self.mu*(self.Ux + self.Vy)) 
+                     - self.V*(self.mu*(self.Vx + self.Uy))) 
+                - self.derivY.df_2D(rhoE*self.V + self.V*self.p 
+                    - (self.mu/self.idealGas.Pr/(self.idealGas.gamma-1))*self.derivY.df_2D(self.T) +
+                     - self.V*(2*self.mu*self.Vy - (2/3)*self.mu*(self.Ux + self.Vy))
+                     - self.U*(self.mu*(self.Vx + self.Uy)))); 
+        
+        
+        self.rhoEk2 = self.dt*(drhoE + self.calcSpongeSource(rhoE,"ENGY"))
     
     
     #Be sure to handle corner of mesh for the different combinations of periodic dirichlet boundaries...
     def postStepBCHandling(self, rho, rhoU, rhoV, rhoE):
-        if self.bcType == "DIRICHLET":
+        if self.bcXType == "DIRICHLET":
+            
             if self.bcX0 == "ADIABATIC_WALL":
-                rho[0,:] = -self.dt*self.derivX.compact1stDeriv(rhoU)[0,:]
-                rhoU[0,:]  = 0
-                rhoV[0,:]  = 0
-                rhoE[0,:]  = (-self.dt*(self.derivX.compact1stDeriv(rhoE*self.U + self.U*self.p) -
-                                      (self.mu/self.idealGas.Pr/(self.idealGas.gamma-1))*self.derivX.compact2ndDeriv(self.T) +
-                                      (4/3)*self.mu*self.U*self.derivX.compact2ndDeriv(self.U)))[0,:]
+                self.rhok2[0,:] = -self.dt*self.derivX.df_2D(rhoU)[0,:]
+                self.rhoUk2[0,:]  = 0
+                self.rhoVk2[0,:]  = 0
+                self.rhoEk2[0,:]  = (-self.dt*(self.derivX.df_2D(rhoE*self.U + self.U*self.p) -
+                                      (self.mu/self.idealGas.Pr/(self.idealGas.gamma-1))*self.derivX.d2f_2D(self.T) +
+                                      (4/3)*self.mu*self.U*self.derivX.d2f_2D(self.U)))[0,:]
             else:
-                rho[0,:]   = 0
-                rhoU[0,:]  = 0
-                rhoV[0,:]  = 0
-                rhoE[0,:]  = 0
-                
-            if self.bcY0 == "ADIABATIC_WALL":
-                rho[:,0] = -self.dt*self.derivY.compact1stDeriv(rhoV)[:,0]
-                rhoU[:,0]  = 0
-                rhoV[:,0]  = 0
-                rhoE[:,0]  = (-self.dt*(self.derivY.compact1stDeriv(rhoE*self.V + self.V*self.p) -
-                                      (self.mu/self.idealGas.Pr/(self.idealGas.gamma-1))*self.derivY.compact2ndDeriv(self.T) +
-                                      (4/3)*self.mu*self.V*self.derivY.compact2ndDeriv(self.V)))[:,0]
-            else:
-                rho[:,0]   = 0
-                rhoU[:,0]  = 0
-                rhoV[:,0]  = 0
-                rhoE[:,0]  = 0
+                self.rhok2[0,:]   = 0
+                self.rhoUk2[0,:]  = 0
+                self.rhoVk2[0,:]  = 0
+                self.rhoEk2[0,:]  = 0
                 
             if self.bcX1 == "ADIABATIC_WALL":
-                rho[-1,:]  = -self.dt*self.derivX.compact1stDeriv(rhoU)[-1,:]
-                rhoU[-1,:] = 0
-                rhoV[-1,:] = 0
-                rhoE[-1,:] = (-self.dt*(self.derivX.compact1stDeriv(rhoE*self.U + self.U*self.p) -
-                                      (self.mu/self.idealGas.Pr/(self.idealGas.gamma-1))*self.derivX.compact2ndDeriv(self.T) +
-                                      (4/3)*self.mu*self.U*self.derivX.compact2ndDeriv(self.U)))[-1,:]
+                self.rhok2[-1,:]  = -self.dt*self.derivX.df_2D(rhoU)[-1,:]
+                self.rhoUk2[-1,:] = 0
+                self.rhoVk2[-1,:] = 0
+                self.rhoEk2[-1,:] = (-self.dt*(self.derivX.df_2D(rhoE*self.U + self.U*self.p) -
+                                      (self.mu/self.idealGas.Pr/(self.idealGas.gamma-1))*self.derivX.d2f_2D(self.T) +
+                                      (4/3)*self.mu*self.U*self.derivX.d2f_2D(self.U)))[-1,:]
             else:
-                rho[-1]  = 0
-                rhoU[-1] = 0
-                rhoV[-1] = 0
-                rhoE[-1] = 0  
+                self.rhok2[-1,:]  = 0
+                self.rhoUk2[-1,:] = 0
+                self.rhoVk2[-1,:] = 0
+                self.rhoEk2[-1,:] = 0  
+                
+        if self.bcYType == "DIRICHLET":
+                
+            if self.bcY0 == "ADIABATIC_WALL":
+                self.rhok2[:,0] = -self.dt*self.derivY.df_2D(rhoV)[:,0]
+                self.rhoUk2[:,0]  = 0
+                self.rhoVk2[:,0]  = 0
+                self.rhoEk2[:,0]  = (-self.dt*(self.derivY.df_2D(rhoE*self.V + self.V*self.p) -
+                                      (self.mu/self.idealGas.Pr/(self.idealGas.gamma-1))*self.derivY.d2f_2D(self.T) +
+                                      (4/3)*self.mu*self.V*self.derivY.d2f_2D(self.V)))[:,0]
+            else:
+                self.rhok2[:,0]   = 0
+                self.rhoUk2[:,0]  = 0
+                self.rhoVk2[:,0]  = 0
+                self.rhoEk2[:,0]  = 0
+            
                 
             if self.bcY1 == "ADIABATIC_WALL":
-                rho[:,-1]  = -self.dt*self.derivY.compact1stDeriv(rhoV)[:,-1]
-                rhoU[:,-1] = 0
-                rhoV[:,-1] = 0
-                rhoE[:,-1]  = (-self.dt*(self.derivY.compact1stDeriv(rhoE*self.V + self.V*self.p) -
-                                      (self.mu/self.idealGas.Pr/(self.idealGas.gamma-1))*self.derivY.compact2ndDeriv(self.T) +
-                                      (4/3)*self.mu*self.V*self.derivY.compact2ndDeriv(self.V)))[:,-1]
+                self.rhok2[:,-1]  = -self.dt*self.derivY.df_2D(rhoV)[:,-1]
+                self.rhoUk2[:,-1] = 0
+                self.rhoVk2[:,-1] = 0
+                self.rhoEk2[:,-1]  = (-self.dt*(self.derivY.df_2D(rhoE*self.V + self.V*self.p) -
+                                      (self.mu/self.idealGas.Pr/(self.idealGas.gamma-1))*self.derivY.d2f_2D(self.T) +
+                                      (4/3)*self.mu*self.V*self.derivY.d2f_2D(self.V)))[:,-1]
+                self.a = (-self.dt*(self.derivY.df_2D(rhoE*self.V + self.V*self.p) -
+                                      (self.mu/self.idealGas.Pr/(self.idealGas.gamma-1))*self.derivY.d2f_2D(self.T) +
+                                      (4/3)*self.mu*self.V*self.derivY.d2f_2D(self.V)))
             else:
-                rho[:,-1]   = 0
-                rhoU[:,-1]  = 0
-                rhoV[:,-1]  = 0
-                rhoE[:,-1]  = 0
+                self.rhok2[:,-1]   = 0
+                self.rhoUk2[:,-1]  = 0
+                self.rhoVk2[:,-1]  = 0
+                self.rhoEk2[:,-1]  = 0
     
     def updateConservedData(self,rkStep):
         if rkStep == 1:
@@ -383,6 +432,7 @@ class CSolver2D:
             self.mu = self.idealGas.mu_ref*(self.T/self.idealGas.T_ref)**0.76
             self.k  = self.idealGas.cp*self.mu/self.idealGas.Pr
             self.sos   = np.sqrt(self.idealGas.gamma*self.p/self.rhok)
+            
         elif rkStep == 4:
             self.U = self.rhoU1/self.rho1
             self.V = self.rhoV1/self.rho1
@@ -396,15 +446,15 @@ class CSolver2D:
     def filterPrimativeValues(self):
         if(self.timeStep%self.filterStep == 0):
             #Need to flip the order of the filtering every other time
-            self.rho1  = self.filtX.compactFilter(self.rho2)
-            self.rhoU1 = self.filtX.compactFilter(self.rhoU2)
-            self.rhoV1 = self.filtX.compactFilter(self.rhoV2)
-            self.rhoE1 = self.filtX.compactFilter(self.rhoE2)
+            self.rho1  = self.filtX.filt_2D(self.rho2)
+            self.rhoU1 = self.filtX.filt_2D(self.rhoU2)
+            self.rhoV1 = self.filtX.filt_2D(self.rhoV2)
+            self.rhoE1 = self.filtX.filt_2D(self.rhoE2)
             
-            self.rho1  = self.filtY.compactFilter(self.rho1)
-            self.rhoU1 = self.filtY.compactFilter(self.rhoU1)
-            self.rhoV1 = self.filtY.compactFilter(self.rhoV1)
-            self.rhoE1 = self.filtY.compactFilter(self.rhoE1)
+            self.rho1  = self.filtY.filt_2D(self.rho1)
+            self.rhoU1 = self.filtY.filt_2D(self.rhoU1)
+            self.rhoV1 = self.filtY.filt_2D(self.rhoV1)
+            self.rhoE1 = self.filtY.filt_2D(self.rhoE1)
             
             print("Filtering...")
         
@@ -442,24 +492,42 @@ class CSolver2D:
             eps = 1.0/(self.spongeBC.spongeAvgT/self.dt+1.0)
             self.spongeBC.spongeRhoAvg  += eps*(self.rho1  - self.spongeBC.spongeRhoAvg)
             self.spongeBC.spongeRhoUAvg += eps*(self.rhoU1 - self.spongeBC.spongeRhoUAvg)
+            self.spongeBC.spongeRhoVAvg += eps*(self.rhoV1 - self.spongeBC.spongeRhoVAvg)
             self.spongeBC.spongeRhoEAvg += eps*(self.rhoE1 - self.spongeBC.spongeRhoEAvg)
             self.spongeBC.spongeRhoEAvg = (self.spongeBC.spongeEpsP*self.spongeBC.spongeRhoEAvg + 
                 (1.0 - self.spongeBC.spongeEpsP)*(self.spongeBC.spongeP/(self.idealGas.gamma-1) + 
-                 0.5*(self.spongeBC.spongeRhoUAvg**2)/self.spongeBC.spongeRhoAvg))
+                 0.5*(self.spongeBC.spongeRhoUAvg**2 + self.spongeBC.spongeRhoVAvg**2)/self.spongeBC.spongeRhoAvg))
             
             if self.bcX0 == "SPONGE":
-                self.rho1[0]   = self.spongeBC.spongeRhoAvg[0]
-                self.rhoU1[0]  = self.spongeBC.spongeRhoUAvg[0]
-                self.rhoE1[0]  = self.spongeBC.spongeRhoEAvg[0]
+                self.rho1[0,:]   = self.spongeBC.spongeRhoAvg[0,:]
+                self.rhoU1[0,:]  = self.spongeBC.spongeRhoUAvg[0,:]
+                self.rhoV1[0,:]  = self.spongeBC.spongeRhoVAvg[0,:]
+                self.rhoE1[0,:]  = self.spongeBC.spongeRhoEAvg[0,:]
                 
             if self.bcX1 == "SPONGE": 
-                self.rho1[-1]  = self.spongeBC.spongeRhoAvg[-1]
-                self.rhoU1[-1] = self.spongeBC.spongeRhoUAvg[-1]
-                self.rhoE1[-1] = self.spongeBC.spongeRhoEAvg[-1]
+                self.rho1[-1,:]  = self.spongeBC.spongeRhoAvg[-1,:]
+                self.rhoU1[-1,:] = self.spongeBC.spongeRhoUAvg[-1,:]
+                self.rhoV1[-1,:] = self.spongeBC.spongeRhoVAvg[-1,:]
+                self.rhoE1[-1,:] = self.spongeBC.spongeRhoEAvg[-1,:]
+                
+            if self.bcY0 == "SPONGE":
+                self.rho1[:,0]   = self.spongeBC.spongeRhoAvg[:,0]
+                self.rhoU1[:,0]  = self.spongeBC.spongeRhoUAvg[:,0]
+                self.rhoV1[:,0]  = self.spongeBC.spongeRhoVAvg[:,0]
+                self.rhoE1[:,0]  = self.spongeBC.spongeRhoEAvg[:,0]
+                
+            if self.bcY1 == "SPONGE": 
+                self.rho1[:,-1]  = self.spongeBC.spongeRhoAvg[:,-1]
+                self.rhoU1[:,-1] = self.spongeBC.spongeRhoUAvg[:,-1]
+                self.rhoV1[:,-1] = self.spongeBC.spongeRhoVAvg[:,-1]
+                self.rhoE1[:,-1] = self.spongeBC.spongeRhoEAvg[:,-1]  
+              
     
     def plotFigure(self):
-        plt.plot(self.x,self.rho1)
-        plt.axis([0, self.L, 0.95, 1.05])
+        #plt.plot(self.y,self.rho1[25,:])
+        plt.pcolor(self.X.transpose(), self.Y.transpose(), self.p)
+        plt.colorbar()
+        plt.axis("equal")
 
     def checkSolution(self):
         

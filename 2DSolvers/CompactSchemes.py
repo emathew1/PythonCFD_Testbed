@@ -353,24 +353,24 @@ class CollocatedDeriv:
     def compact2ndDeriv(self,f): return spsparlin.spsolve(self.LH2D,spspar.csr_matrix.dot(self.RH2D,f))
 
     def df_2D(self,f): 
-        if self.dir == "X":
+        if self.dir == "Y":
             return self.compact1stDeriv(f.transpose()).transpose()
-        elif self.dir == "Y":
+        elif self.dir == "X":
             return self.compact1stDeriv(f)
         else:
             print("Unknown direction")
 
     def d2f_2D(self,f): 
-        if self.dir == "X":
+        if self.dir == "Y":
             return self.compact2ndDeriv(f.transpose()).transpose()
-        elif self.dir == "Y":
+        elif self.dir == "X":
             return self.compact2ndDeriv(f)
         else:
             print("Unknown direction")
 
     def calcNeumann0(self,f):
         
-        if self.dir == "X":
+        if self.dir == "Y":
             f  = f.transpose()
         
         #6th order...
@@ -384,14 +384,14 @@ class CollocatedDeriv:
         
         f0 = (a0*f[1] + a1*f[2] + a2*f[3] + a3*f[4] + a4*f[5] + a5*f[6])/alpha
         
-        if self.dir == "X":
+        if self.dir == "Y":
             return f0.transpose()
-        elif self.dir == "Y":
+        elif self.dir == "X":
             return f0
 
     def calcNeumannEnd(self,f):
         
-        if self.dir == "X":
+        if self.dir == "Y":
             f  = f.transpose()       
         
         #6th order...
@@ -405,9 +405,9 @@ class CollocatedDeriv:
         
         fend = (a0*f[-2] + a1*f[-3] + a2*f[-4] + a3*f[-5] + a4*f[-6] + a5*f[-7])/alpha
         
-        if self.dir == "X":
+        if self.dir == "Y":
             return fend.transpose()
-        elif self.dir == "Y":
+        elif self.dir == "X":
             return fend
 
 
@@ -580,9 +580,9 @@ class CompactFilter:
     
     
     def filt_2D(self,f): 
-        if self.dir == "X":
+        if self.dir == "Y":
             return self.compactFilter(f.transpose()).transpose()
-        elif self.dir == "Y":
+        elif self.dir == "X":
             return self.compactFilter(f)
         else:
             print("Unknown direction")
