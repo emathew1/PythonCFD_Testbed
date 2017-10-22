@@ -3,6 +3,7 @@
 import numpy as np
 from drawnow import drawnow
 import matplotlib.pyplot as plt
+import matplotlib.cm as cm
 
 #Bring in functions we need
 from CompactSchemes import CollocatedDeriv
@@ -60,6 +61,8 @@ class CSolver2D:
         
         self.done = False
         
+        self.Uwall = 0.1
+        
         #grid info
         self.Nx = domain.Nx
         self.x = domain.x
@@ -104,8 +107,20 @@ class CSolver2D:
         #Derivatives of Data
         self.Ux  = np.zeros((self.Nx, self.Ny))
         self.Uy  = np.zeros((self.Nx, self.Ny))
-        self.Vx  = np.zeros((self.Nx, self.Ny))
-        self.Vy  = np.zeros((self.Nx, self.Ny))
+        self.Uxx = np.zeros((self.Nx, self.Ny))
+        self.Uyy = np.zeros((self.Nx, self.Ny))
+        self.Uxy = np.zeros((self.Nx, self.Ny))
+        
+        self.Vx   = np.zeros((self.Nx, self.Ny))
+        self.Vy   = np.zeros((self.Nx, self.Ny))
+        self.Vxx  = np.zeros((self.Nx, self.Ny))
+        self.Vyy  = np.zeros((self.Nx, self.Ny))
+        self.Vxy  = np.zeros((self.Nx, self.Ny))
+        
+        self.Tx  = np.zeros((self.Nx, self.Ny))
+        self.Ty  = np.zeros((self.Nx, self.Ny))
+        self.Txx = np.zeros((self.Nx, self.Ny))
+        self.Tyy = np.zeros((self.Nx, self.Ny))
 
         #conserved data
         self.rho1  = np.zeros((self.Nx, self.Ny))
@@ -138,6 +153,7 @@ class CSolver2D:
         
         #filter data
         self.filterStep = timeStepping.filterStep
+        self.numberOfFilterStep = 0
         self.alphaF = alphaF
         
         if self.bcX0 == "SPONGE" or self.bcX1 == "SPONGE" or self.bcY0 == "SPONGE" or self.bcY1 == "SPONGE":
@@ -198,9 +214,16 @@ class CSolver2D:
             self.U[:,-1]  = 0.0
             self.rhoU1[:,-1]  = 0.0
             self.V[:,-1]  = 0.0
-            self.rhoV1[:,-1]  = 0.0       
+            self.rhoV1[:,-1]  = 0.0   
+            
+        if self.bcY1 == "ADIABATIC_MOVINGWALL":
+            self.T[:,-1]  = self.derivY.calcNeumannEnd(self.T)
+            self.U[:,-1]  = self.Uwall
+            self.rhoU1[:,-1]  = self.rho1[:,-1]*self.Uwall
+            self.V[:,-1]  = 0.0
+            self.rhoV1[:,-1]  = 0.0 
 
-        if self.bcX0 == "ADIABATIC_WALL" or self.bcX1 == "ADIABATIC_WALL" or self.bcY0 == "ADIABATIC_WALL" or self.bcY1 == "ADIABATIC_WALL":
+        if self.bcX0 == "ADIABATIC_WALL" or self.bcX1 == "ADIABATIC_WALL" or self.bcY0 == "ADIABATIC_WALL" or self.bcY1 == "ADIABATIC_WALL" or self.bcY1 == "ADIABATIC_MOVINGWALL":
             self.p     = self.idealGas.solvePIdealGas(self.rho1, self.T)
             self.sos   = self.idealGas.solveSOS(self.rho1, self.p)
             self.rhoE1 = self.idealGas.solveRhoE(self.rho1, self.U, self.V, self.p)            
@@ -274,12 +297,43 @@ class CSolver2D:
             rhoV[:,-1]    = 0.0
             self.T[:,-1]  = self.derivY.calcNeumannEnd(self.T)
             self.p[:,-1]  = self.idealGas.solvePIdealGas(rho[:,-1],self.T[:,-1])
+ 
+        if self.bcY1 == "ADIABATIC_MOVINGWALL":
+            self.U[:,-1]  = self.Uwall
+            rhoU[:,-1]    = rho[:,-1]*self.Uwall
+            self.V[:,-1]  = 0.0
+            rhoV[:,-1]    = 0.0
+            self.T[:,-1]  = self.derivY.calcNeumannEnd(self.T[:,:])
+            self.p[:,-1]  = self.idealGas.solvePIdealGas(rho[:,-1],self.T[:,-1])
+    
     
     def preStepDerivatives(self):
+        
+        #First Derivatives
         self.Ux = self.derivX.df_2D(self.U)
         self.Vx = self.derivX.df_2D(self.V)
         self.Uy = self.derivY.df_2D(self.U)
         self.Vy = self.derivY.df_2D(self.V) 
+        
+        self.Tx = self.derivX.df_2D(self.T)
+        self.Ty = self.derivY.df_2D(self.T)
+        
+        #Second Derivatives
+        self.Uxx = self.derivX.d2f_2D(self.U)
+        self.Uyy = self.derivY.d2f_2D(self.U)
+        self.Vxx = self.derivX.d2f_2D(self.V)        
+        self.Vyy = self.derivY.d2f_2D(self.V)
+        
+        self.Txx = self.derivX.d2f_2D(self.T)
+        self.Tyy = self.derivY.d2f_2D(self.T)
+        
+        #Cross Derivatives
+        if self.timeStep%2 == 0:
+            self.Uxy = self.derivX.df_2D(self.derivY.df_2D(self.U))
+            self.Vxy = self.derivX.df_2D(self.derivY.df_2D(self.V))
+        else:
+            self.Uxy = self.derivY.df_2D(self.derivX.df_2D(self.U))
+            self.Vxy = self.derivY.df_2D(self.derivX.df_2D(self.V))            
     
     #Left off here...
     
@@ -368,16 +422,13 @@ class CSolver2D:
                 self.rhoEk2[:,0]  = 0
             
                 
-            if self.bcY1 == "ADIABATIC_WALL":
+            if self.bcY1 == "ADIABATIC_WALL" or self.bcY1 == "ADIABATIC_MOVINGWALL":
                 self.rhok2[:,-1]  = -self.dt*self.derivY.df_2D(rhoV)[:,-1]
                 self.rhoUk2[:,-1] = 0
                 self.rhoVk2[:,-1] = 0
                 self.rhoEk2[:,-1]  = (-self.dt*(self.derivY.df_2D(rhoE*self.V + self.V*self.p) -
                                       (self.mu/self.idealGas.Pr/(self.idealGas.gamma-1))*self.derivY.d2f_2D(self.T) +
                                       (4/3)*self.mu*self.V*self.derivY.d2f_2D(self.V)))[:,-1]
-                self.a = (-self.dt*(self.derivY.df_2D(rhoE*self.V + self.V*self.p) -
-                                      (self.mu/self.idealGas.Pr/(self.idealGas.gamma-1))*self.derivY.d2f_2D(self.T) +
-                                      (4/3)*self.mu*self.V*self.derivY.d2f_2D(self.V)))
             else:
                 self.rhok2[:,-1]   = 0
                 self.rhoUk2[:,-1]  = 0
@@ -445,17 +496,30 @@ class CSolver2D:
             
     def filterPrimativeValues(self):
         if(self.timeStep%self.filterStep == 0):
+            self.numberOfFilterStep += 1
+            
             #Need to flip the order of the filtering every other time
-            self.rho1  = self.filtX.filt_2D(self.rho2)
-            self.rhoU1 = self.filtX.filt_2D(self.rhoU2)
-            self.rhoV1 = self.filtX.filt_2D(self.rhoV2)
-            self.rhoE1 = self.filtX.filt_2D(self.rhoE2)
-            
-            self.rho1  = self.filtY.filt_2D(self.rho1)
-            self.rhoU1 = self.filtY.filt_2D(self.rhoU1)
-            self.rhoV1 = self.filtY.filt_2D(self.rhoV1)
-            self.rhoE1 = self.filtY.filt_2D(self.rhoE1)
-            
+            if self.numberOfFilterStep%2 == 0:
+                self.rho1  = self.filtX.filt_2D(self.rho2)
+                self.rhoU1 = self.filtX.filt_2D(self.rhoU2)
+                self.rhoV1 = self.filtX.filt_2D(self.rhoV2)
+                self.rhoE1 = self.filtX.filt_2D(self.rhoE2)
+                
+                self.rho1  = self.filtY.filt_2D(self.rho1)
+                self.rhoU1 = self.filtY.filt_2D(self.rhoU1)
+                self.rhoV1 = self.filtY.filt_2D(self.rhoV1)
+                self.rhoE1 = self.filtY.filt_2D(self.rhoE1)
+            else:
+                self.rho1  = self.filtY.filt_2D(self.rho2)
+                self.rhoU1 = self.filtY.filt_2D(self.rhoU2)
+                self.rhoV1 = self.filtY.filt_2D(self.rhoV2)
+                self.rhoE1 = self.filtY.filt_2D(self.rhoE2)
+                
+                self.rho1  = self.filtX.filt_2D(self.rho1)
+                self.rhoU1 = self.filtX.filt_2D(self.rhoU1)
+                self.rhoV1 = self.filtX.filt_2D(self.rhoV1)
+                self.rhoE1 = self.filtX.filt_2D(self.rhoE1)
+                
             print("Filtering...")
         
             #Is there something here that needs to be done about corners for
@@ -525,7 +589,8 @@ class CSolver2D:
     
     def plotFigure(self):
         #plt.plot(self.y,self.rho1[25,:])
-        plt.pcolor(self.X.transpose(), self.Y.transpose(), self.p)
+        plt.imshow(np.rot90(self.Vx[1:-2,1:-2] - self.Uy[1:-2,1:-2]), cmap="RdBu",interpolation='bicubic')
+        #plt.imshow(np.rot90(self.U), cmap="RdBu",interpolation='bicubic')
         plt.colorbar()
         plt.axis("equal")
 
