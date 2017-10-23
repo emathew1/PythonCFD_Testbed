@@ -16,36 +16,36 @@ from CollocatedSolver import CSolver2D
 plt.ion()
 
 #Domain information
-Nx = 21
-Ny = 21
+Nx = 75
+Ny = 150
 Lx = 1
-Ly = 1
+Ly = 2
 x = np.linspace(0,Lx,Nx)
 y = np.linspace(0,Ly,Ny)
 domain = Domain2D(Nx, Ny, x, y, Lx, Ly)
 [X, Y] = np.meshgrid(x,y)
 
 #Boundary Condition information
-bcXType = "PERIODIC"
-bcX0 = "PERIODIC"
-bcX1 = "PERIODIC"
-bcYType = "DIRICHLET"
-bcY0 = "ADIABATIC_WALL"
-bcY1 = "ADIABATIC_MOVINGWALL"
+bcYType = "PERIODIC"
+bcY0 = "PERIODIC"
+bcY1 = "PERIODIC"
+bcXType = "DIRICHLET"
+bcX0 = "SPONGE"
+bcX1 = "SPONGE"
 bc = BC2D(bcXType, bcX0, bcX1, bcYType, bcY0, bcY1)
 
 #Time stepping information
-CFL = 1.0
-maxTimeStep = 100000
+CFL = 0.25
+maxTimeStep = 10000
 maxTime = 1000
-plotStep = 50
+plotStep = 25
 filterStep = 1
 timestepping = TimeStepping(CFL, maxTimeStep, maxTime, plotStep, filterStep)
 
 #Filtering stuff
-alphaF = 0.45
+alphaF = 0.49
 #Fluid stuff
-mu_ref = 0.01
+mu_ref = 0.0001
 
 ##Ghia results
 #yy = np.array([0.0, 0.0547, 0.0625, 0.0703, 0.1016, 0.1719, 0.2813, 0.4531, 0.50, 0.6172, 0.7344, 0.8516,  0.9531, 0.9609, 0.9688, 0.9766, 1.0])
@@ -66,16 +66,27 @@ p0   = np.ones((Nx,Ny))
 #Initial conditions
 for i in range(Nx):
     for j in range(Ny):
+        if x[i] > Lx/2:
+            V0[i,j] = 0.7
+            U0[i,j] = 0.0
+            rho0[i,j] = 1.0
+            p0[i,j] = 1.0/csolver.idealGas.gamma + np.random.rand(1)/20
+        else:
+            V0[i,j] = -0.7
+            U0[i,j] = 0.0
+            rho0[i,j] = 1.0
+            p0[i,j] = 1.0/csolver.idealGas.gamma + np.random.rand(1)/20
+        
 #        if x[i] > Lx/4 and x[i] < 3*Lx/4 and y[j] > Ly/8 and y[j] < 2*Ly/3 :
 #            U0[i,j]   = 0.0
 #            V0[i,j]   = 0.0
 #            rho0[i,j] = 1 + 0.05*np.exp(-((x[i]-(Lx/2))**2 + (y[j]-(Ly/3))**2)/0.001)
 #            p0[i,j]   = (1 + 0.05*np.exp(-((x[i]-(Lx/2))**2 + (y[j]-(Ly/3))**2)/0.001))/csolver.idealGas.gamma
 #        else:
-            U0[i,j]   = 0.0
-            V0[i,j]   = 0.0
-            rho0[i,j] = 1.0
-            p0[i,j]   = 1.0/csolver.idealGas.gamma
+#            U0[i,j]   = 0.0
+#            V0[i,j]   = 0.0
+#            rho0[i,j] = 1.0
+#            p0[i,j]   = 1.0/csolver.idealGas.gamma
 
 #Set the initial conditions in the solver        
 csolver.setInitialConditions(rho0, U0, V0, p0)
@@ -92,9 +103,9 @@ while csolver.done == False:
     csolver.preStepDerivatives()
     
     csolver.solveContinuity(csolver.rho1, csolver.rhoU1, csolver.rhoV1, csolver.rhoE1)
-    csolver.solveXMomentum(csolver.rho1, csolver.rhoU1, csolver.rhoV1, csolver.rhoE1)
-    csolver.solveYMomentum(csolver.rho1, csolver.rhoU1, csolver.rhoV1, csolver.rhoE1)
-    csolver.solveEnergy(csolver.rho1, csolver.rhoU1, csolver.rhoV1, csolver.rhoE1)
+    csolver.solveXMomentum_PV(csolver.rho1, csolver.rhoU1, csolver.rhoV1, csolver.rhoE1)
+    csolver.solveYMomentum_PV(csolver.rho1, csolver.rhoU1, csolver.rhoV1, csolver.rhoE1)
+    csolver.solveEnergy_PV(csolver.rho1, csolver.rhoU1, csolver.rhoV1, csolver.rhoE1)
 
     csolver.postStepBCHandling(csolver.rho1, csolver.rhoU1, csolver.rhoV1, csolver.rhoE1)
     
@@ -109,9 +120,9 @@ while csolver.done == False:
     csolver.preStepDerivatives()
     
     csolver.solveContinuity(csolver.rhok, csolver.rhoUk, csolver.rhoVk, csolver.rhoEk)
-    csolver.solveXMomentum(csolver.rhok, csolver.rhoUk, csolver.rhoVk, csolver.rhoEk)
-    csolver.solveYMomentum(csolver.rhok, csolver.rhoUk, csolver.rhoVk, csolver.rhoEk)
-    csolver.solveEnergy(csolver.rhok, csolver.rhoUk, csolver.rhoVk, csolver.rhoEk)
+    csolver.solveXMomentum_PV(csolver.rhok, csolver.rhoUk, csolver.rhoVk, csolver.rhoEk)
+    csolver.solveYMomentum_PV(csolver.rhok, csolver.rhoUk, csolver.rhoVk, csolver.rhoEk)
+    csolver.solveEnergy_PV(csolver.rhok, csolver.rhoUk, csolver.rhoVk, csolver.rhoEk)
     
     csolver.postStepBCHandling(csolver.rhok, csolver.rhoUk, csolver.rhoVk, csolver.rhoEk)
 
@@ -126,9 +137,9 @@ while csolver.done == False:
     csolver.preStepDerivatives()
     
     csolver.solveContinuity(csolver.rhok, csolver.rhoUk, csolver.rhoVk, csolver.rhoEk)
-    csolver.solveXMomentum(csolver.rhok, csolver.rhoUk, csolver.rhoVk, csolver.rhoEk)
-    csolver.solveYMomentum(csolver.rhok, csolver.rhoUk, csolver.rhoVk, csolver.rhoEk)
-    csolver.solveEnergy(csolver.rhok, csolver.rhoUk, csolver.rhoVk, csolver.rhoEk)
+    csolver.solveXMomentum_PV(csolver.rhok, csolver.rhoUk, csolver.rhoVk, csolver.rhoEk)
+    csolver.solveYMomentum_PV(csolver.rhok, csolver.rhoUk, csolver.rhoVk, csolver.rhoEk)
+    csolver.solveEnergy_PV(csolver.rhok, csolver.rhoUk, csolver.rhoVk, csolver.rhoEk)
     
     csolver.postStepBCHandling(csolver.rhok, csolver.rhoUk, csolver.rhoVk, csolver.rhoEk)
 
@@ -144,9 +155,9 @@ while csolver.done == False:
     csolver.preStepDerivatives()
     
     csolver.solveContinuity(csolver.rhok, csolver.rhoUk, csolver.rhoVk, csolver.rhoEk)
-    csolver.solveXMomentum(csolver.rhok, csolver.rhoUk, csolver.rhoVk, csolver.rhoEk)
-    csolver.solveYMomentum(csolver.rhok, csolver.rhoUk, csolver.rhoVk, csolver.rhoEk)
-    csolver.solveEnergy(csolver.rhok, csolver.rhoUk, csolver.rhoVk, csolver.rhoEk)
+    csolver.solveXMomentum_PV(csolver.rhok, csolver.rhoUk, csolver.rhoVk, csolver.rhoEk)
+    csolver.solveYMomentum_PV(csolver.rhok, csolver.rhoUk, csolver.rhoVk, csolver.rhoEk)
+    csolver.solveEnergy_PV(csolver.rhok, csolver.rhoUk, csolver.rhoVk, csolver.rhoEk)
     
     csolver.postStepBCHandling(csolver.rhok, csolver.rhoUk, csolver.rhoVk, csolver.rhoEk)
 

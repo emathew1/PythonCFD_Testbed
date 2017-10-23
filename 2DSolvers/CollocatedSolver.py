@@ -185,6 +185,7 @@ class CSolver2D:
         self.rhoE1 = self.idealGas.solveRhoE(rho0,U0,V0,p0)
         self.T     = self.idealGas.solveT(rho0, p0)
         self.mu    = self.idealGas.solveMu(self.T)
+        self.Amu   = self.idealGas.solveAMu(self.T)
         self.k     = self.idealGas.solveK(self.mu)
         self.sos   = self.idealGas.solveSOS(self.rho1, self.p)
         
@@ -334,25 +335,54 @@ class CSolver2D:
         else:
             self.Uxy = self.derivY.df_2D(self.derivX.df_2D(self.U))
             self.Vxy = self.derivY.df_2D(self.derivX.df_2D(self.V))            
+        
+#Actually solving the equations...        
+        
+    def solveXMomentum_Euler(self, rhoU):
+        return -self.derivX.df_2D(rhoU*self.U + self.p) - self.derivY.df_2D(rhoU*self.V)
     
-    #Left off here...
+    def solveYMomentum_Euler(self, rhoV):
+        return -self.derivX.df_2D(rhoV*self.U) -self.derivY.df_2D(rhoV*self.V + self.p)
+
+    def solveEnergy_Euler(self, rhoE):
+        return -self.derivX.df_2D(rhoE*self.U + self.U*self.p) - self.derivY.df_2D(rhoE*self.V + self.V*self.p)
     
+    def solveXMomentum_Viscous(self):
+        return ((4/3)*self.Amu*self.Tx*self.Ux + (4/3)*self.mu*self.Uxx - (2/3)*self.Amu*self.Tx*self.Vy +
+                  (1/3)*self.mu*self.Vxy + self.Amu*self.Ty*self.Vx + self.Amu*self.Ty*self.Uy + self.mu*self.Uyy);       
+
+    def solveYMomentum_Viscous(self):
+        return ((4/3)*self.Amu*self.Ty*self.Vy + (4/3)*self.mu*self.Vyy - (2/3)*self.Amu*self.Ty*self.Ux +
+                  (1/3)*self.mu*self.Uxy + self.Amu*self.Tx*self.Uy + self.Amu*self.Tx*self.Vx + self.mu*self.Vxx);
+
+    def solveEnergy_Viscous(self):
+        return  ((self.idealGas.cp/self.idealGas.Pr)*self.Amu*(self.Tx**2 + self.Ty**2) +
+                    (self.idealGas.cp/self.idealGas.Pr)*self.mu*(self.Txx + self.Tyy)  +
+                    (4/3)*self.mu*(self.Ux**2 + self.Vy**2) + 
+                    (4/3)*self.Amu*(self.U*self.Tx*self.Ux + self.V*self.Ty*self.Vy) +
+                    (4/3)*self.mu*(self.U*self.Uxx + self.V*self.Vyy) - (4/3)*self.mu*self.Ux*self.Vy -
+                    (2/3)*self.Amu*(self.U*self.Tx*self.Vy + self.V*self.Ty*self.Ux) +
+                    (1/3)*self.mu*(self.U*self.Vxy + self.V*self.Uxy) +
+                    self.mu*(self.Uy**2 + self.Vx**2) + 2.*self.mu*(self.Uy*self.Vx) +
+                    self.mu*(self.U*self.Uyy + self.V*self.Vxx) +
+                    self.Amu*(self.V*self.Tx*self.Uy + self.V*self.Tx*self.Vx + 
+                    self.U*self.Ty*self.Uy + self.U*self.Ty*self.Vx))
+
+#Using methods that don't maximize the resolution capabilities of the compact differences
     def solveContinuity(self, rho, rhoU, rhoV, rhoE):
         
         drho = (-self.derivX.df_2D(rhoU) - self.derivY.df_2D(rhoV))
         
         self.rhok2  = self.dt*(drho + self.calcSpongeSource(rho,"CONT"))
-        
-        
-        
+
     def solveXMomentum(self, rho, rhoU, rhoV, rhoE):
         drhoU = (-self.derivX.df_2D(rhoU*self.U + self.p +
                                     -2*self.mu*self.Ux + (2/3)*self.mu*(self.Ux + self.Vy)) +
                                          -self.derivY.df_2D(rhoU*self.V -
                                         self.mu*(self.Vx + self.Uy)))
     
-        self.rhoUk2 = self.dt*(drhoU + self.calcSpongeSource(rhoU,"XMOM"))
-
+        self.rhoUk2 = self.dt*(drhoU + self.calcSpongeSource(rhoU,"XMOM"))            
+            
     def solveYMomentum(self, rho, rhoU, rhoV, rhoE):
         
         drhoV = (-self.derivY.df_2D(rhoV*self.V + self.p +
@@ -374,9 +404,25 @@ class CSolver2D:
         
         
         self.rhoEk2 = self.dt*(drhoE + self.calcSpongeSource(rhoE,"ENGY"))
+
+#Using methods that do take advantage of the the spectral benefits of the compact diff's    
+
+    def solveXMomentum_PV(self, rho, rhoU, rhoV, rhoE):
+        self.rhoUk2 = self.dt*(self.solveXMomentum_Euler(rhoU) +
+                               self.solveXMomentum_Viscous() +
+                               self.calcSpongeSource(rhoU,"XMOM"))            
+
+    def solveYMomentum_PV(self, rho, rhoU, rhoV, rhoE):
+        self.rhoVk2 = self.dt*(self.solveYMomentum_Euler(rhoV) + 
+                               self.solveYMomentum_Viscous() +                               
+                               self.calcSpongeSource(rhoV,"YMOM"))
+
+    def solveEnergy_PV(self, rho, rhoU, rhoV, rhoE):
+        self.rhoEk2 = self.dt*(self.solveEnergy_Euler(rhoE) + 
+                               self.solveEnergy_Viscous() +                                                              
+                               self.calcSpongeSource(rhoE,"ENGY"))
+        
     
-    
-    #Be sure to handle corner of mesh for the different combinations of periodic dirichlet boundaries...
     def postStepBCHandling(self, rho, rhoU, rhoV, rhoE):
         if self.bcXType == "DIRICHLET":
             
@@ -483,6 +529,7 @@ class CSolver2D:
             self.mu = self.idealGas.mu_ref*(self.T/self.idealGas.T_ref)**0.76
             self.k  = self.idealGas.cp*self.mu/self.idealGas.Pr
             self.sos   = np.sqrt(self.idealGas.gamma*self.p/self.rhok)
+            self.Amu   = self.idealGas.solveAMu(self.T)
             
         elif rkStep == 4:
             self.U = self.rhoU1/self.rho1
@@ -493,6 +540,7 @@ class CSolver2D:
             self.mu = self.idealGas.mu_ref*(self.T/self.idealGas.T_ref)**0.76
             self.k  = self.idealGas.cp*self.mu/self.idealGas.Pr
             self.sos   = np.sqrt(self.idealGas.gamma*self.p/self.rho1)
+            self.Amu   = self.idealGas.solveAMu(self.T)
             
     def filterPrimativeValues(self):
         if(self.timeStep%self.filterStep == 0):
@@ -588,9 +636,10 @@ class CSolver2D:
               
     
     def plotFigure(self):
-        #plt.plot(self.y,self.rho1[25,:])
-        plt.imshow(np.rot90(self.Vx[1:-2,1:-2] - self.Uy[1:-2,1:-2]), cmap="RdBu",interpolation='bicubic')
-        #plt.imshow(np.rot90(self.U), cmap="RdBu",interpolation='bicubic')
+        #plt.plot(self.x,self.rho1[:,0])
+#        plt.imshow(np.rot90(self.Vx[1:-2,1:-2] - self.Uy[1:-2,1:-2]), cmap="RdBu",interpolation='bicubic')
+#        plt.imshow(np.rot90(self.Ux[1:-2,1:-2] + self.Ux[1:-2,1:-2]), cmap="RdBu",interpolation='bicubic')
+        plt.imshow(np.rot90(self.V), cmap="RdBu",interpolation='bicubic')
         plt.colorbar()
         plt.axis("equal")
 

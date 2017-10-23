@@ -34,6 +34,9 @@ class IdealGas:
     def solveMu(self,T):
         return self.mu_ref*(T/self.T_ref)**0.76
     
+    def solveAMu(self, T):
+        return 0.76*(self.mu_ref/(self.T_ref**0.76))*T**(0.76-1.0)
+    
     def solveK(self, mu):
         return self.cp*mu/self.Pr
     
