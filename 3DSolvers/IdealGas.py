@@ -19,8 +19,8 @@ class IdealGas:
         self.R_gas = self.p_ref/self.rho_ref/self.T_ref
         self.cp = self.R_gas*self.gamma/(self.gamma-1.0)
 
-    def solveRhoE(self,rho,U,V,p):
-        return p/(self.gamma-1) + (1/2)*rho*(U*U + V*V)
+    def solveRhoE(self, rho, U, V, W, p):
+        return p/(self.gamma-1) + (1/2)*rho*(U*U + V*V + W*W)
     
     def solveT(self,rho, p):
         return p/(rho*self.R_gas)
@@ -28,8 +28,8 @@ class IdealGas:
     def solvePIdealGas(self, rho, T):
         return T*rho*self.R_gas
     
-    def solvePPrimative(self, rho, rhoU, rhoV, rhoE):
-        return (self.gamma-1)*(rhoE - 0.5*(rhoU*rhoU + rhoV*rhoV)/rho)
+    def solvePPrimative(self, rho, rhoU, rhoV, rhoW, rhoE):
+        return (self.gamma-1)*(rhoE - 0.5*(rhoU*rhoU + rhoV*rhoV + rhoW*rhoW)/rho)
     
     def solveMu(self,T):
         return self.mu_ref*(T/self.T_ref)**0.76

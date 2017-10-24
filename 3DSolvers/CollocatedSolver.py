@@ -9,7 +9,7 @@ import matplotlib.cm as cm
 from CompactSchemes import CollocatedDeriv
 from CompactSchemes import CompactFilter
 from IdealGas import IdealGas
-from SpongeBC import SpongeBC2D
+from SpongeBC import SpongeBC3D
 
 #############################
 #############################
@@ -17,9 +17,9 @@ from SpongeBC import SpongeBC2D
 #############################
 #############################
 
-class Domain2D:
+class Domain3D:
     
-    def __init__(self, Nx, Ny, x, y, Lx, Ly):
+    def __init__(self, Nx, Ny, Nz, x, y, z, Lx, Ly, Lz):
         self.Nx = Nx
         self.x = x
         self.Lx = Lx
@@ -30,14 +30,20 @@ class Domain2D:
         self.Ly = Ly
         self.dy = y[1]-y[0]  
         
-        [X, Y] = np.meshgrid(x,y)
+        self.Nz = Nz
+        self.z = z
+        self.Lz = Lz
+        self.dz = z[1]-z[0] 
+        
+        [X, Y, Z] = np.meshgrid(x, y, z)
         
         self.X = X
         self.Y = Y
+        self.Z = Z
         
-class BC2D:
+class BC3D:
     
-    def __init__(self, bcXType, bcX0, bcX1, bcYType, bcY0, bcY1):
+    def __init__(self, bcXType, bcX0, bcX1, bcYType, bcY0, bcY1, bcZType, bcZ0, bcZ1):
         self.bcXType = bcXType
         self.bcX0 = bcX0
         self.bcX1 = bcX1
@@ -45,6 +51,10 @@ class BC2D:
         self.bcYType = bcYType
         self.bcY0 = bcY0
         self.bcY1 = bcY1
+        
+        self.bcZType = bcZType
+        self.bcZ0 = bcZ0
+        self.bcZ1 = bcZ1        
         
 class TimeStepping:
     
@@ -55,7 +65,7 @@ class TimeStepping:
         self.plotStep = plotStep
         self.filterStep = filterStep
 
-class CSolver2D:
+class CSolver3D:
     
     def __init__(self, domain, bc, timeStepping, alphaF, mu_ref):
         
@@ -74,8 +84,14 @@ class CSolver2D:
         self.Ly = domain.Ly
         self.dy = domain.dy
         
+        self.Nz = domain.Nz
+        self.z = domain.z
+        self.Lz = domain.Lz
+        self.dz = domain.dz        
+        
         self.X = domain.X
         self.Y = domain.Y
+        self.Z = domain.Z
         
         #gas properties
         self.idealGas = IdealGas(mu_ref)
@@ -89,59 +105,79 @@ class CSolver2D:
         self.bcY0 = bc.bcY0
         self.bcY1 = bc.bcY1
         
+        self.bcZType = bc.bcZType
+        self.bcZ0 = bc.bcZ0
+        self.bcZ1 = bc.bcZ1
+        
         #initial conditions
-        self.U0   = np.zeros((self.Nx, self.Ny))
-        self.V0   = np.zeros((self.Nx, self.Ny))
-        self.rho0 = np.zeros((self.Nx, self.Ny))
-        self.p0   = np.zeros((self.Nx, self.Ny))
+        self.U0   = np.zeros((self.Nx, self.Ny, self.Nz))
+        self.V0   = np.zeros((self.Nx, self.Ny, self.Nz))
+        self.W0   = np.zeros((self.Nx, self.Ny, self.Nz))
+        self.rho0 = np.zeros((self.Nx, self.Ny, self.Nz))
+        self.p0   = np.zeros((self.Nx, self.Ny, self.Nz))
         
         #non-conserved data
-        self.U   = np.zeros((self.Nx, self.Ny))
-        self.V   = np.zeros((self.Nx, self.Ny))
-        self.T   = np.zeros((self.Nx, self.Ny))
-        self.p   = np.zeros((self.Nx, self.Ny))
-        self.mu  = np.zeros((self.Nx, self.Ny))
-        self.k   = np.zeros((self.Nx, self.Ny))
-        self.sos = np.zeros((self.Nx, self.Ny))
+        self.U   = np.zeros((self.Nx, self.Ny, self.Nz))
+        self.V   = np.zeros((self.Nx, self.Ny, self.Nz))
+        self.W   = np.zeros((self.Nx, self.Ny, self.Nz))
+        self.T   = np.zeros((self.Nx, self.Ny, self.Nz))
+        self.p   = np.zeros((self.Nx, self.Ny, self.Nz))
+        self.mu  = np.zeros((self.Nx, self.Ny, self.Nz))
+        self.k   = np.zeros((self.Nx, self.Ny, self.Nz))
+        self.sos = np.zeros((self.Nx, self.Ny, self.Nz))
         
         #Derivatives of Data
-        self.Ux  = np.zeros((self.Nx, self.Ny))
-        self.Uy  = np.zeros((self.Nx, self.Ny))
-        self.Uxx = np.zeros((self.Nx, self.Ny))
-        self.Uyy = np.zeros((self.Nx, self.Ny))
-        self.Uxy = np.zeros((self.Nx, self.Ny))
+        self.Ux  = np.zeros((self.Nx, self.Ny, self.Nz))
+        self.Uy  = np.zeros((self.Nx, self.Ny, self.Nz))
+        self.Uz  = np.zeros((self.Nx, self.Ny, self.Nz))
+        self.Uxx = np.zeros((self.Nx, self.Ny, self.Nz))
+        self.Uyy = np.zeros((self.Nx, self.Ny, self.Nz))
+        self.Uzz = np.zeros((self.Nx, self.Ny, self.Nz))        
+        self.Uxy = np.zeros((self.Nx, self.Ny, self.Nz))
+        self.Uxz = np.zeros((self.Nx, self.Ny, self.Nz))        
+        self.Uyz = np.zeros((self.Nx, self.Ny, self.Nz))
         
-        self.Vx   = np.zeros((self.Nx, self.Ny))
-        self.Vy   = np.zeros((self.Nx, self.Ny))
-        self.Vxx  = np.zeros((self.Nx, self.Ny))
-        self.Vyy  = np.zeros((self.Nx, self.Ny))
-        self.Vxy  = np.zeros((self.Nx, self.Ny))
+        self.Vx   = np.zeros((self.Nx, self.Ny, self.Nz))
+        self.Vy   = np.zeros((self.Nx, self.Ny, self.Nz))
+        self.Vz   = np.zeros((self.Nx, self.Ny, self.Nz))        
+        self.Vxx  = np.zeros((self.Nx, self.Ny, self.Nz))
+        self.Vyy  = np.zeros((self.Nx, self.Ny, self.Nz))
+        self.Vzz  = np.zeros((self.Nx, self.Ny, self.Nz))
+        self.Vxy  = np.zeros((self.Nx, self.Ny, self.Nz))
+        self.Vxz  = np.zeros((self.Nx, self.Ny, self.Nz))
+        self.Vyz  = np.zeros((self.Nx, self.Ny, self.Nz))
         
-        self.Tx  = np.zeros((self.Nx, self.Ny))
-        self.Ty  = np.zeros((self.Nx, self.Ny))
-        self.Txx = np.zeros((self.Nx, self.Ny))
-        self.Tyy = np.zeros((self.Nx, self.Ny))
+        self.Tx  = np.zeros((self.Nx, self.Ny, self.Nz))
+        self.Ty  = np.zeros((self.Nx, self.Ny, self.Nz))
+        self.Tz  = np.zeros((self.Nx, self.Ny, self.Nz))
+        self.Txx = np.zeros((self.Nx, self.Ny, self.Nz))
+        self.Tyy = np.zeros((self.Nx, self.Ny, self.Nz))
+        self.Tzz = np.zeros((self.Nx, self.Ny, self.Nz))
 
         #conserved data
-        self.rho1  = np.zeros((self.Nx, self.Ny))
-        self.rhoU1 = np.zeros((self.Nx, self.Ny))
-        self.rhoV1 = np.zeros((self.Nx, self.Ny))
-        self.rhoE1 = np.zeros((self.Nx, self.Ny))
+        self.rho1  = np.zeros((self.Nx, self.Ny, self.Nz))
+        self.rhoU1 = np.zeros((self.Nx, self.Ny, self.Nz))
+        self.rhoV1 = np.zeros((self.Nx, self.Ny, self.Nz))
+        self.rhoW1 = np.zeros((self.Nx, self.Ny, self.Nz))
+        self.rhoE1 = np.zeros((self.Nx, self.Ny, self.Nz))
         
-        self.rhok  = np.zeros((self.Nx, self.Ny))
-        self.rhoUk = np.zeros((self.Nx, self.Ny))
-        self.rhoVk = np.zeros((self.Nx, self.Ny))
-        self.rhoEk = np.zeros((self.Nx, self.Ny))
+        self.rhok  = np.zeros((self.Nx, self.Ny, self.Nz))
+        self.rhoUk = np.zeros((self.Nx, self.Ny, self.Nz))
+        self.rhoVk = np.zeros((self.Nx, self.Ny, self.Nz))
+        self.rhoWk = np.zeros((self.Nx, self.Ny, self.Nz))
+        self.rhoEk = np.zeros((self.Nx, self.Ny, self.Nz))
 
-        self.rhok2  = np.zeros((self.Nx, self.Ny))
-        self.rhoUk2 = np.zeros((self.Nx, self.Ny))
-        self.rhoVk2 = np.zeros((self.Nx, self.Ny))       
-        self.rhoEk2 = np.zeros((self.Nx, self.Ny))        
+        self.rhok2  = np.zeros((self.Nx, self.Ny, self.Nz))
+        self.rhoUk2 = np.zeros((self.Nx, self.Ny, self.Nz))
+        self.rhoVk2 = np.zeros((self.Nx, self.Ny, self.Nz))
+        self.rhoWk2 = np.zeros((self.Nx, self.Ny, self.Nz))       
+        self.rhoEk2 = np.zeros((self.Nx, self.Ny, self.Nz))        
         
-        self.rho2  = np.zeros((self.Nx, self.Ny))
-        self.rhoU2 = np.zeros((self.Nx, self.Ny))
-        self.rhoV2 = np.zeros((self.Nx, self.Ny))
-        self.rhoE2 = np.zeros((self.Nx, self.Ny))
+        self.rho2  = np.zeros((self.Nx, self.Ny, self.Nz))
+        self.rhoU2 = np.zeros((self.Nx, self.Ny, self.Nz))
+        self.rhoV2 = np.zeros((self.Nx, self.Ny, self.Nz))
+        self.rhoW2 = np.zeros((self.Nx, self.Ny, self.Nz))
+        self.rhoE2 = np.zeros((self.Nx, self.Ny, self.Nz))
         
         #time data
         self.timeStep = 0
@@ -156,11 +192,13 @@ class CSolver2D:
         self.numberOfFilterStep = 0
         self.alphaF = alphaF
         
-        if self.bcX0 == "SPONGE" or self.bcX1 == "SPONGE" or self.bcY0 == "SPONGE" or self.bcY1 == "SPONGE":
+        if self.bcX0 == "SPONGE" or self.bcX1 == "SPONGE" or self.bcY0 == "SPONGE" or self.bcY1 == "SPONGE" or self.bcZ0 == "SPONGE" or self.bcZ1 == "SPONGE"  :
             self.spongeFlag = True
-            self.spongeBC = SpongeBC2D(domain, self.idealGas, bc)
+            self.spongeBC = SpongeBC3D(domain, self.idealGas, bc)
         else:
             self.spongeFlag = False
+        
+        #########STOPPED HERE##############
         
         #Generate our derivatives and our filters    
         self.derivX = CollocatedDeriv(self.Nx,self.dx,self.bcXType,"X")
