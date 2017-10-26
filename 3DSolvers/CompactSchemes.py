@@ -9,6 +9,7 @@ Created on Tue Sep 26 21:17:56 2017
 import numpy as np
 import scipy.sparse as spspar
 import scipy.sparse.linalg as spsparlin
+import time
 
 
 #####################
@@ -161,10 +162,14 @@ class StaggeredDeriv:
 
 class CollocatedDeriv:
 
-    def __init__(self, N, dx, typeBC, dir):
+    def __init__(self, N, dx, domain, typeBC, dir):
         self.N = N
+        self.Nx = domain.Nx
+        self.Ny = domain.Ny
+        self.Nz = domain.Nz
         self.dx = dx
         self.typeBC = typeBC
+        self.temp = np.zeros((domain.Nx, domain.Ny, domain.Nz))
         self.createCollocatedDerivMatrices()
         self.dir = dir
     
@@ -351,64 +356,89 @@ class CollocatedDeriv:
 
     def compact1stDeriv(self,f): return spsparlin.spsolve(self.LH1D,spspar.csr_matrix.dot(self.RH1D,f))
     def compact2ndDeriv(self,f): return spsparlin.spsolve(self.LH2D,spspar.csr_matrix.dot(self.RH2D,f))
-
-    def df_2D(self,f): 
-        if self.dir == "Y":
-            return self.compact1stDeriv(f.transpose()).transpose()
-        elif self.dir == "X":
-            return self.compact1stDeriv(f)
+            
+    def df_3D(self,f): 
+        
+        if self.dir == "X":
+            for j in range(self.Ny):
+                for k in range(self.Nz):
+                    self.temp[:,j,k] = self.compact1stDeriv(f[:,j,k])
+            return self.temp
+        elif self.dir == "Y":
+            for i in range(self.Nx):
+                for k in range(self.Nz):
+                    self.temp[i,:,k] = self.compact1stDeriv(f[i,:,k])        
+            return self.temp      
+        elif self.dir == "Z":
+            for i in range(self.Nx):
+                for j in range(self.Ny):
+                    self.temp[i,j,:] = self.compact1stDeriv(f[i,j,:])        
+            return self.temp           
         else:
             print("Unknown direction")
 
-    def d2f_2D(self,f): 
-        if self.dir == "Y":
-            return self.compact2ndDeriv(f.transpose()).transpose()
-        elif self.dir == "X":
-            return self.compact2ndDeriv(f)
+    def d2f_3D(self,f): 
+        
+        if self.dir == "X":
+            for j in range(self.Ny):
+                for k in range(self.Nz):
+                    self.temp[:,j,k] = self.compact2ndDeriv(f[:,j,k])
+            return self.temp
+        elif self.dir == "Y":
+            for i in range(self.Nx):
+                for k in range(self.Nz):
+                    self.temp[i,:,k] = self.compact2ndDeriv(f[i,:,k])        
+            return self.temp      
+        elif self.dir == "Z":
+            for i in range(self.Nx):
+                for j in range(self.Ny):
+                    self.temp[i,j,:] = self.compact2ndDeriv(f[i,j,:])        
+            return self.temp           
         else:
             print("Unknown direction")
 
-    def calcNeumann0(self,f):
-        
-        if self.dir == "Y":
-            f  = f.transpose()
-        
-        #6th order...
-        alpha = 147
-        a0 = 360
-        a1 = -450
-        a2 = 400
-        a3 = -225
-        a4 = 72
-        a5 = -10
-        
-        f0 = (a0*f[1] + a1*f[2] + a2*f[3] + a3*f[4] + a4*f[5] + a5*f[6])/alpha
-        
-        if self.dir == "Y":
-            return f0.transpose()
-        elif self.dir == "X":
-            return f0
 
-    def calcNeumannEnd(self,f):
-        
-        if self.dir == "Y":
-            f  = f.transpose()       
-        
-        #6th order...
-        alpha = 147
-        a0 = 360
-        a1 = -450
-        a2 = 400
-        a3 = -225
-        a4 = 72
-        a5 = -10
-        
-        fend = (a0*f[-2] + a1*f[-3] + a2*f[-4] + a3*f[-5] + a4*f[-6] + a5*f[-7])/alpha
-        
-        if self.dir == "Y":
-            return fend.transpose()
-        elif self.dir == "X":
-            return fend
+#    def calcNeumann0(self,f):
+#        
+#        if self.dir == "Y":
+#            f  = f.transpose()
+#        
+#        #6th order...
+#        alpha = 147
+#        a0 = 360
+#        a1 = -450
+#        a2 = 400
+#        a3 = -225
+#        a4 = 72
+#        a5 = -10
+#        
+#        f0 = (a0*f[1] + a1*f[2] + a2*f[3] + a3*f[4] + a4*f[5] + a5*f[6])/alpha
+#        
+#        if self.dir == "Y":
+#            return f0.transpose()
+#        elif self.dir == "X":
+#            return f0
+#
+#    def calcNeumannEnd(self,f):
+#        
+#        if self.dir == "Y":
+#            f  = f.transpose()       
+#        
+#        #6th order...
+#        alpha = 147
+#        a0 = 360
+#        a1 = -450
+#        a2 = 400
+#        a3 = -225
+#        a4 = 72
+#        a5 = -10
+#        
+#        fend = (a0*f[-2] + a1*f[-3] + a2*f[-4] + a3*f[-5] + a4*f[-6] + a5*f[-7])/alpha
+#        
+#        if self.dir == "Y":
+#            return fend.transpose()
+#        elif self.dir == "X":
+#            return fend
 
 
 ###################
@@ -419,8 +449,12 @@ class CollocatedDeriv:
 
 class CompactFilter:
 
-    def __init__(self, N, alphaF, typeBC, dir):
+    def __init__(self, N, alphaF, domain, typeBC, dir):
         self.N = N
+        self.Nx = domain.Nx
+        self.Ny = domain.Ny
+        self.Nz = domain.Nz      
+        self.temp = np.zeros((domain.Nx, domain.Ny, domain.Nz))
         self.alphaF = alphaF
         self.typeBC = typeBC        
         self.createFilterMatrices()
@@ -578,12 +612,23 @@ class CompactFilter:
     
     def compactFilter(self,f): return spsparlin.spsolve(self.LHF,spspar.csr_matrix.dot(self.RHF,f))
     
-    
-    def filt_2D(self,f): 
-        if self.dir == "Y":
-            return self.compactFilter(f.transpose()).transpose()
-        elif self.dir == "X":
-            return self.compactFilter(f)
+            
+    def filt_3D(self,f):
+        if self.dir == "X":
+            for j in range(self.Ny):
+                for k in range(self.Nz):
+                    self.temp[:,j,k] = self.compactFilter(f[:,j,k])
+            return self.temp
+        elif self.dir == "Y":
+            for i in range(self.Nx):
+                for k in range(self.Nz):
+                    self.temp[i,:,k] = self.compactFilter(f[i,:,k])        
+            return self.temp      
+        elif self.dir == "Z":
+            for i in range(self.Nx):
+                for j in range(self.Ny):
+                    self.temp[i,j,:] = self.compactFilter(f[i,j,:])        
+            return self.temp           
         else:
             print("Unknown direction")
     

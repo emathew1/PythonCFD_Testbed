@@ -197,89 +197,91 @@ class CSolver3D:
             self.spongeBC = SpongeBC3D(domain, self.idealGas, bc)
         else:
             self.spongeFlag = False
-        
-        #########STOPPED HERE##############
-        
+                
         #Generate our derivatives and our filters    
-        self.derivX = CollocatedDeriv(self.Nx,self.dx,self.bcXType,"X")
-        self.derivY = CollocatedDeriv(self.Ny,self.dy,self.bcYType,"Y")
+        self.derivX = CollocatedDeriv(self.Nx, self.dx, domain, self.bcXType, "X")
+        self.derivY = CollocatedDeriv(self.Ny, self.dy, domain, self.bcYType, "Y")
+        self.derivZ = CollocatedDeriv(self.Nz, self.dz, domain, self.bcZType, "Z")
         
-        self.filtX  = CompactFilter(self.Nx,self.alphaF,self.bcXType,"X")
-        self.filtY  = CompactFilter(self.Ny,self.alphaF,self.bcYType,"Y")
+        self.filtX  = CompactFilter(self.Nx, self.alphaF, domain, self.bcXType, "X")
+        self.filtY  = CompactFilter(self.Ny, self.alphaF, domain, self.bcYType, "Y")
+        self.filtZ  = CompactFilter(self.Nz, self.alphaF, domain, self.bcZType, "Z")
               
         
-    def setInitialConditions(self, rho0, U0, V0, p0):
+    def setInitialConditions(self, rho0, U0, V0, W0, p0):
         self.rho0 = rho0
         self.U0 = U0
         self.V0 = V0
+        self.W0 = W0
         self.p0 = p0
         
         self.U     = U0
         self.V     = V0
+        self.W     = W0
         self.rho1  = rho0
         self.p     = p0
         self.rhoU1 = rho0*U0
         self.rhoV1 = rho0*V0
-        self.rhoE1 = self.idealGas.solveRhoE(rho0,U0,V0,p0)
+        self.rhoW1 = rho0*W0
+        self.rhoE1 = self.idealGas.solveRhoE(rho0,U0,V0,W0,p0)
         self.T     = self.idealGas.solveT(rho0, p0)
         self.mu    = self.idealGas.solveMu(self.T)
         self.Amu   = self.idealGas.solveAMu(self.T)
         self.k     = self.idealGas.solveK(self.mu)
         self.sos   = self.idealGas.solveSOS(self.rho1, self.p)
         
-        if self.bcX0 == "ADIABATIC_WALL":
-            self.T[0,:]  = self.derivX.calcNeumann0(self.T)
-            self.U[0,:]  = 0.0
-            self.rhoU1[0,:]  = 0.0
-            self.V[0,:]  = 0.0
-            self.rhoV1[0,:]  = 0.0
-            
-        if self.bcX1 == "ADIABATIC_WALL":
-            self.T[-1,:] = self.derivX.calcNeumannEnd(self.T)
-            self.U[-1,:] = 0.0
-            self.rhoU1[-1,:] = 0.0
-            self.V[-1,:] = 0.0
-            self.rhoV1[-1,:] = 0.0
-            
-        if self.bcY0 == "ADIABATIC_WALL":
-            self.T[:,0]  = self.derivY.calcNeumann0(self.T)
-            self.U[:,0]  = 0.0
-            self.rhoU1[:,0]  = 0.0
-            self.V[:,0]  = 0.0
-            self.rhoV1[:,0]  = 0.0
-            
-        if self.bcY1 == "ADIABATIC_WALL":
-            self.T[:,-1]  = self.derivY.calcNeumannEnd(self.T)
-            self.U[:,-1]  = 0.0
-            self.rhoU1[:,-1]  = 0.0
-            self.V[:,-1]  = 0.0
-            self.rhoV1[:,-1]  = 0.0   
-            
-        if self.bcY1 == "ADIABATIC_MOVINGWALL":
-            self.T[:,-1]  = self.derivY.calcNeumannEnd(self.T)
-            self.U[:,-1]  = self.Uwall
-            self.rhoU1[:,-1]  = self.rho1[:,-1]*self.Uwall
-            self.V[:,-1]  = 0.0
-            self.rhoV1[:,-1]  = 0.0 
-
-        if self.bcX0 == "ADIABATIC_WALL" or self.bcX1 == "ADIABATIC_WALL" or self.bcY0 == "ADIABATIC_WALL" or self.bcY1 == "ADIABATIC_WALL" or self.bcY1 == "ADIABATIC_MOVINGWALL":
-            self.p     = self.idealGas.solvePIdealGas(self.rho1, self.T)
-            self.sos   = self.idealGas.solveSOS(self.rho1, self.p)
-            self.rhoE1 = self.idealGas.solveRhoE(self.rho1, self.U, self.V, self.p)            
-            
+#        if self.bcX0 == "ADIABATIC_WALL":
+#            self.T[0,:]  = self.derivX.calcNeumann0(self.T)
+#            self.U[0,:]  = 0.0
+#            self.rhoU1[0,:]  = 0.0
+#            self.V[0,:]  = 0.0
+#            self.rhoV1[0,:]  = 0.0
+#            
+#        if self.bcX1 == "ADIABATIC_WALL":
+#            self.T[-1,:] = self.derivX.calcNeumannEnd(self.T)
+#            self.U[-1,:] = 0.0
+#            self.rhoU1[-1,:] = 0.0
+#            self.V[-1,:] = 0.0
+#            self.rhoV1[-1,:] = 0.0
+#            
+#        if self.bcY0 == "ADIABATIC_WALL":
+#            self.T[:,0]  = self.derivY.calcNeumann0(self.T)
+#            self.U[:,0]  = 0.0
+#            self.rhoU1[:,0]  = 0.0
+#            self.V[:,0]  = 0.0
+#            self.rhoV1[:,0]  = 0.0
+#            
+#        if self.bcY1 == "ADIABATIC_WALL":
+#            self.T[:,-1]  = self.derivY.calcNeumannEnd(self.T)
+#            self.U[:,-1]  = 0.0
+#            self.rhoU1[:,-1]  = 0.0
+#            self.V[:,-1]  = 0.0
+#            self.rhoV1[:,-1]  = 0.0   
+#            
+#        if self.bcY1 == "ADIABATIC_MOVINGWALL":
+#            self.T[:,-1]  = self.derivY.calcNeumannEnd(self.T)
+#            self.U[:,-1]  = self.Uwall
+#            self.rhoU1[:,-1]  = self.rho1[:,-1]*self.Uwall
+#            self.V[:,-1]  = 0.0
+#            self.rhoV1[:,-1]  = 0.0 
+#
+#        if self.bcX0 == "ADIABATIC_WALL" or self.bcX1 == "ADIABATIC_WALL" or self.bcY0 == "ADIABATIC_WALL" or self.bcY1 == "ADIABATIC_WALL" or self.bcY1 == "ADIABATIC_MOVINGWALL":
+#            self.p     = self.idealGas.solvePIdealGas(self.rho1, self.T)
+#            self.sos   = self.idealGas.solveSOS(self.rho1, self.p)
+#            self.rhoE1 = self.idealGas.solveRhoE(self.rho1, self.U, self.V, self.p)            
+#            
         if self.spongeFlag == True: 
             self.spongeBC.spongeRhoAvg  = self.rho1
             self.spongeBC.spongeRhoUAvg = self.rhoU1
-            self.spongeBC.spongeRhoVAvg = self.rhoV1            
+            self.spongeBC.spongeRhoVAvg = self.rhoV1   
+            self.spongeBC.spongeRhoWAvg = self.rhoW1            
             self.spongeBC.spongeRhoEAvg = self.rhoE1
             
-        self.Ux = self.derivX.df_2D(self.U)
-        self.Vx = self.derivX.df_2D(self.V)
-        self.Uy = self.derivY.df_2D(self.U)
-        self.Vy = self.derivY.df_2D(self.V)        
         
     def calcDtFromCFL(self):
-        UChar_dx = (np.fabs(self.U) + self.sos)/self.dx + (np.fabs(self.V) + self.sos)/self.dy
+        UChar_dx = ((np.fabs(self.U) + self.sos)/self.dx + 
+                    (np.fabs(self.V) + self.sos)/self.dy +
+                    (np.fabs(self.W) + self.sos)/self.dz)
         
         self.dt   = np.min(self.CFL/UChar_dx)
         
@@ -295,7 +297,9 @@ class CSolver3D:
             elif eqn == "XMOM":
                 source = self.spongeBC.spongeSigma*(self.spongeBC.spongeRhoUAvg-f)     
             elif eqn == "YMOM":
-                source = self.spongeBC.spongeSigma*(self.spongeBC.spongeRhoVAvg-f)     
+                source = self.spongeBC.spongeSigma*(self.spongeBC.spongeRhoVAvg-f)   
+            elif eqn == "ZMOM":
+                source = self.spongeBC.spongeSigma*(self.spongeBC.spongeRhoWAvg-f)                   
             elif eqn == "ENGY":
                 source = self.spongeBC.spongeSigma*(self.spongeBC.spongeRhoEAvg-f)
             else:
@@ -304,86 +308,135 @@ class CSolver3D:
             source = 0
         return source
     
-    def preStepBCHandling(self, rho, rhoU, rhoV, rhoE):
-        if self.bcX0 == "ADIABATIC_WALL":
-            self.U[0,:]  = 0.0
-            rhoU[0,:]    = 0.0
-            self.V[0,:]  = 0.0
-            rhoV[0,:]    = 0.0
-            self.T[0,:]  = self.derivX.calcNeumann0(self.T)
-            self.p[0,:]  = self.idealGas.solvePIdealGas(rho[0,:],self.T[0,:])
+#    def preStepBCHandling(self, rho, rhoU, rhoV, rhoW, rhoE):
         
-        if self.bcX1 == "ADIABATIC_WALL":
-            self.U[-1,:] = 0.0
-            rhoU[-1,:]   = 0.0
-            self.V[-1,:] = 0.0
-            rhoV[-1,:]   = 0.0
-            self.T[-1,:] = self.derivX.calcNeumannEnd(self.T)
-            self.p[-1,:] = self.idealGas.solvePIdealGas(rho[-1,:],self.T[-1,:])
-
-        if self.bcY0 == "ADIABATIC_WALL":
-            self.U[:,0]  = 0.0
-            rhoU[:,0]    = 0.0
-            self.V[:,0]  = 0.0
-            rhoV[:,0]    = 0.0
-            self.T[:,0]  = self.derivY.calcNeumann0(self.T)
-            self.p[:,0]  = self.idealGas.solvePIdealGas(rho[:,0],self.T[:,0])
-    
-        if self.bcY1 == "ADIABATIC_WALL":
-            self.U[:,-1]  = 0.0
-            rhoU[:,-1]    = 0.0
-            self.V[:,-1]  = 0.0
-            rhoV[:,-1]    = 0.0
-            self.T[:,-1]  = self.derivY.calcNeumannEnd(self.T)
-            self.p[:,-1]  = self.idealGas.solvePIdealGas(rho[:,-1],self.T[:,-1])
- 
-        if self.bcY1 == "ADIABATIC_MOVINGWALL":
-            self.U[:,-1]  = self.Uwall
-            rhoU[:,-1]    = rho[:,-1]*self.Uwall
-            self.V[:,-1]  = 0.0
-            rhoV[:,-1]    = 0.0
-            self.T[:,-1]  = self.derivY.calcNeumannEnd(self.T[:,:])
-            self.p[:,-1]  = self.idealGas.solvePIdealGas(rho[:,-1],self.T[:,-1])
-    
+#        if self.bcX0 == "ADIABATIC_WALL":
+#            self.U[0,:]  = 0.0
+#            rhoU[0,:]    = 0.0
+#            self.V[0,:]  = 0.0
+#            rhoV[0,:]    = 0.0
+#            self.T[0,:]  = self.derivX.calcNeumann0(self.T)
+#            self.p[0,:]  = self.idealGas.solvePIdealGas(rho[0,:],self.T[0,:])
+#        
+#        if self.bcX1 == "ADIABATIC_WALL":
+#            self.U[-1,:] = 0.0
+#            rhoU[-1,:]   = 0.0
+#            self.V[-1,:] = 0.0
+#            rhoV[-1,:]   = 0.0
+#            self.T[-1,:] = self.derivX.calcNeumannEnd(self.T)
+#            self.p[-1,:] = self.idealGas.solvePIdealGas(rho[-1,:],self.T[-1,:])
+#
+#        if self.bcY0 == "ADIABATIC_WALL":
+#            self.U[:,0]  = 0.0
+#            rhoU[:,0]    = 0.0
+#            self.V[:,0]  = 0.0
+#            rhoV[:,0]    = 0.0
+#            self.T[:,0]  = self.derivY.calcNeumann0(self.T)
+#            self.p[:,0]  = self.idealGas.solvePIdealGas(rho[:,0],self.T[:,0])
+#    
+#        if self.bcY1 == "ADIABATIC_WALL":
+#            self.U[:,-1]  = 0.0
+#            rhoU[:,-1]    = 0.0
+#            self.V[:,-1]  = 0.0
+#            rhoV[:,-1]    = 0.0
+#            self.T[:,-1]  = self.derivY.calcNeumannEnd(self.T)
+#            self.p[:,-1]  = self.idealGas.solvePIdealGas(rho[:,-1],self.T[:,-1])
+# 
+#        if self.bcY1 == "ADIABATIC_MOVINGWALL":
+#            self.U[:,-1]  = self.Uwall
+#            rhoU[:,-1]    = rho[:,-1]*self.Uwall
+#            self.V[:,-1]  = 0.0
+#            rhoV[:,-1]    = 0.0
+#            self.T[:,-1]  = self.derivY.calcNeumannEnd(self.T[:,:])
+#            self.p[:,-1]  = self.idealGas.solvePIdealGas(rho[:,-1],self.T[:,-1])
+#    
     
     def preStepDerivatives(self):
         
         #First Derivatives
-        self.Ux = self.derivX.df_2D(self.U)
-        self.Vx = self.derivX.df_2D(self.V)
-        self.Uy = self.derivY.df_2D(self.U)
-        self.Vy = self.derivY.df_2D(self.V) 
+        self.Ux = self.derivX.df_3D(self.U)
+        self.Vx = self.derivX.df_3D(self.V)
+        self.Wx = self.derivX.df_3D(self.W)
         
-        self.Tx = self.derivX.df_2D(self.T)
-        self.Ty = self.derivY.df_2D(self.T)
+        self.Uy = self.derivY.df_3D(self.U)
+        self.Vy = self.derivY.df_3D(self.V)
+        self.Wy = self.derivY.df_3D(self.W)
+        
+        self.Uz = self.derivZ.df_3D(self.U)
+        self.Vz = self.derivZ.df_3D(self.V)
+        self.Wz = self.derivZ.df_3D(self.W)       
+        
+        self.Tx = self.derivX.df_3D(self.T)
+        self.Ty = self.derivY.df_3D(self.T)
+        self.Tz = self.derivZ.df_3D(self.T)
         
         #Second Derivatives
-        self.Uxx = self.derivX.d2f_2D(self.U)
-        self.Uyy = self.derivY.d2f_2D(self.U)
-        self.Vxx = self.derivX.d2f_2D(self.V)        
-        self.Vyy = self.derivY.d2f_2D(self.V)
+        self.Uxx = self.derivX.d2f_3D(self.U)
+        self.Vxx = self.derivX.d2f_3D(self.V)        
+        self.Wxx = self.derivX.d2f_3D(self.W)                
         
-        self.Txx = self.derivX.d2f_2D(self.T)
-        self.Tyy = self.derivY.d2f_2D(self.T)
+        self.Uyy = self.derivY.d2f_3D(self.U)
+        self.Vyy = self.derivY.d2f_3D(self.V)
+        self.Wyy = self.derivY.d2f_3D(self.W)
+        
+        self.Uzz = self.derivZ.d2f_3D(self.U)
+        self.Vzz = self.derivZ.d2f_3D(self.V)
+        self.Wzz = self.derivZ.d2f_3D(self.W)
+        
+        self.Txx = self.derivX.d2f_3D(self.T)
+        self.Tyy = self.derivY.d2f_3D(self.T)
+        self.Tzz = self.derivZ.d2f_3D(self.T)
+
         
         #Cross Derivatives
         if self.timeStep%2 == 0:
-            self.Uxy = self.derivX.df_2D(self.derivY.df_2D(self.U))
-            self.Vxy = self.derivX.df_2D(self.derivY.df_2D(self.V))
+            self.Uxy = self.derivX.df_3D(self.derivY.df_3D(self.U))
+            self.Vxy = self.derivX.df_3D(self.derivY.df_3D(self.V))
+            self.Wxy = self.derivX.df_3D(self.derivY.df_3D(self.W))
         else:
-            self.Uxy = self.derivY.df_2D(self.derivX.df_2D(self.U))
-            self.Vxy = self.derivY.df_2D(self.derivX.df_2D(self.V))            
+            self.Uxy = self.derivY.df_3D(self.derivX.df_3D(self.U))
+            self.Vxy = self.derivY.df_3D(self.derivX.df_3D(self.V))  
+            self.Wxy = self.derivY.df_3D(self.derivX.df_3D(self.W))
+            
+        if self.timeStep%2 == 0:
+            self.Uyz = self.derivY.df_3D(self.derivZ.df_3D(self.U))
+            self.Vyz = self.derivY.df_3D(self.derivZ.df_3D(self.V))
+            self.Wyz = self.derivY.df_3D(self.derivZ.df_3D(self.W))
+        else:
+            self.Uyz = self.derivZ.df_3D(self.derivY.df_3D(self.U))
+            self.Vyz = self.derivZ.df_3D(self.derivY.df_3D(self.V))  
+            self.Wyz = self.derivZ.df_3D(self.derivY.df_3D(self.W))
+            
+        if self.timeStep%2 == 0:
+            self.Uxz = self.derivX.df_3D(self.derivZ.df_3D(self.U))
+            self.Vxz = self.derivX.df_3D(self.derivZ.df_3D(self.V))
+            self.Wxz = self.derivX.df_3D(self.derivZ.df_3D(self.W))
+        else:
+            self.Uxz = self.derivZ.df_3D(self.derivX.df_3D(self.U))
+            self.Vxz = self.derivZ.df_3D(self.derivX.df_3D(self.V))  
+            self.Wxz = self.derivZ.df_3D(self.derivX.df_3D(self.W))           
+            
         
 #Actually solving the equations...        
         
     def solveXMomentum_Euler(self, rhoU):
-        return -self.derivX.df_2D(rhoU*self.U + self.p) - self.derivY.df_2D(rhoU*self.V)
+        return -self.derivX.df_3D(rhoU*self.U + self.p) - self.derivY.df_3D(rhoU*self.V)
+                    -self.derivZ.df_3D(rhoU*self.W)
     
     def solveYMomentum_Euler(self, rhoV):
-        return -self.derivX.df_2D(rhoV*self.U) -self.derivY.df_2D(rhoV*self.V + self.p)
+        return -self.derivX.df_3D(rhoV*self.U) -self.derivY.df_3D(rhoV*self.V + self.p)
+                    -self.derivZ.df_3D(rhoV*self.W)
+                    
+    def solveZMomentum_Euler(self, rhoW):
+        return -self.derivX.df_3D(rhoW*self.U) -self.derivY.df_3D(rhoW*self.V)
+                    -self.derivZ.df_3D(rhoW*self.W + self.p)                    
 
     def solveEnergy_Euler(self, rhoE):
-        return -self.derivX.df_2D(rhoE*self.U + self.U*self.p) - self.derivY.df_2D(rhoE*self.V + self.V*self.p)
+        return -self.derivX.df_3D(rhoE*self.U + self.U*self.p) 
+                    - self.derivY.df_3D(rhoE*self.V + self.V*self.p)
+                        - self.derivZ.df_3D(rhoE*self.W + self.W*self.p)
+    
+    ##Need to write these out!
     
     def solveXMomentum_Viscous(self):
         return ((4/3)*self.Amu*self.Tx*self.Ux + (4/3)*self.mu*self.Uxx - (2/3)*self.Amu*self.Tx*self.Vy +
