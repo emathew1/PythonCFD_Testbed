@@ -614,21 +614,22 @@ class CompactFilter:
     
             
     def filt_3D(self,f):
+        temp = np.zeros((self.Nx,self.Ny,self.Nz))
         if self.dir == "X":
             for j in range(self.Ny):
                 for k in range(self.Nz):
-                    self.temp[:,j,k] = self.compactFilter(f[:,j,k])
-            return self.temp
+                    temp[:,j,k] = self.compactFilter(f[:,j,k])
+            return temp
         elif self.dir == "Y":
             for i in range(self.Nx):
                 for k in range(self.Nz):
-                    self.temp[i,:,k] = self.compactFilter(f[i,:,k])        
-            return self.temp      
+                    temp[i,:,k] = self.compactFilter(f[i,:,k])        
+            return temp      
         elif self.dir == "Z":
             for i in range(self.Nx):
                 for j in range(self.Ny):
-                    self.temp[i,j,:] = self.compactFilter(f[i,j,:])        
-            return self.temp           
+                    temp[i,j,:] = self.compactFilter(f[i,j,:])        
+            return temp           
         else:
             print("Unknown direction")
     

@@ -153,7 +153,11 @@ class CSolver3D:
         self.Txx = np.zeros((self.Nx, self.Ny, self.Nz))
         self.Tyy = np.zeros((self.Nx, self.Ny, self.Nz))
         self.Tzz = np.zeros((self.Nx, self.Ny, self.Nz))
-
+        
+        self.MuX = np.zeros((self.Nx, self.Ny, self.Nz))
+        self.MuY = np.zeros((self.Nx, self.Ny, self.Nz))
+        self.MuZ = np.zeros((self.Nx, self.Ny, self.Nz))
+        
         #conserved data
         self.rho1  = np.zeros((self.Nx, self.Ny, self.Nz))
         self.rhoU1 = np.zeros((self.Nx, self.Ny, self.Nz))
@@ -497,7 +501,7 @@ class CSolver3D:
         temp2 =   (4/3)*(self.U*self.MuX*self.Ux + self.V*self.MuY*self.Vy + self.W*self.MuZ*self.Wz)
         temp2 += -(2/3)*self.U*self.MuX*(self.Vy + self.Wz)
         temp2 += -(2/3)*self.V*self.MuY*(self.Ux + self.Wz)
-        temp2 += -(2/3)*self.W*self.MuW*(self.Ux + self.Vy)
+        temp2 += -(2/3)*self.W*self.MuZ*(self.Ux + self.Vy)
         temp2 += self.U*self.MuY*(self.Uy + self.Vx)
         temp2 += self.U*self.MuZ*(self.Uz + self.Wx)
         temp2 += self.V*self.MuX*(self.Uy + self.Vx)
@@ -568,108 +572,119 @@ class CSolver3D:
         
         #Left off here
     
-    def postStepBCHandling(self, rho, rhoU, rhoV, rhoE):
-        if self.bcXType == "DIRICHLET":
+#    def postStepBCHandling(self, rho, rhoU, rhoV, rhoE):
+        
+#        if self.bcXType == "DIRICHLET":
             
-            if self.bcX0 == "ADIABATIC_WALL":
-                self.rhok2[0,:] = -self.dt*self.derivX.df_2D(rhoU)[0,:]
-                self.rhoUk2[0,:]  = 0
-                self.rhoVk2[0,:]  = 0
-                self.rhoEk2[0,:]  = (-self.dt*(self.derivX.df_2D(rhoE*self.U + self.U*self.p) -
-                                      (self.mu/self.idealGas.Pr/(self.idealGas.gamma-1))*self.derivX.d2f_2D(self.T) +
-                                      (4/3)*self.mu*self.U*self.derivX.d2f_2D(self.U)))[0,:]
-            else:
-                self.rhok2[0,:]   = 0
-                self.rhoUk2[0,:]  = 0
-                self.rhoVk2[0,:]  = 0
-                self.rhoEk2[0,:]  = 0
+#            if self.bcX0 == "ADIABATIC_WALL":
+#                self.rhok2[0,:] = -self.dt*self.derivX.df_2D(rhoU)[0,:]
+#                self.rhoUk2[0,:]  = 0
+#                self.rhoVk2[0,:]  = 0
+#                self.rhoEk2[0,:]  = (-self.dt*(self.derivX.df_2D(rhoE*self.U + self.U*self.p) -
+#                                      (self.mu/self.idealGas.Pr/(self.idealGas.gamma-1))*self.derivX.d2f_2D(self.T) +
+#                                      (4/3)*self.mu*self.U*self.derivX.d2f_2D(self.U)))[0,:]
+#            else:
+#                self.rhok2[0,:]   = 0
+#                self.rhoUk2[0,:]  = 0
+#                self.rhoVk2[0,:]  = 0
+#                self.rhoEk2[0,:]  = 0
+#                
+#            if self.bcX1 == "ADIABATIC_WALL":
+#                self.rhok2[-1,:]  = -self.dt*self.derivX.df_2D(rhoU)[-1,:]
+#                self.rhoUk2[-1,:] = 0
+#                self.rhoVk2[-1,:] = 0
+#                self.rhoEk2[-1,:] = (-self.dt*(self.derivX.df_2D(rhoE*self.U + self.U*self.p) -
+#                                      (self.mu/self.idealGas.Pr/(self.idealGas.gamma-1))*self.derivX.d2f_2D(self.T) +
+#                                      (4/3)*self.mu*self.U*self.derivX.d2f_2D(self.U)))[-1,:]
+#            else:
+#                self.rhok2[-1,:]  = 0
+#                self.rhoUk2[-1,:] = 0
+#                self.rhoVk2[-1,:] = 0
+#                self.rhoEk2[-1,:] = 0  
                 
-            if self.bcX1 == "ADIABATIC_WALL":
-                self.rhok2[-1,:]  = -self.dt*self.derivX.df_2D(rhoU)[-1,:]
-                self.rhoUk2[-1,:] = 0
-                self.rhoVk2[-1,:] = 0
-                self.rhoEk2[-1,:] = (-self.dt*(self.derivX.df_2D(rhoE*self.U + self.U*self.p) -
-                                      (self.mu/self.idealGas.Pr/(self.idealGas.gamma-1))*self.derivX.d2f_2D(self.T) +
-                                      (4/3)*self.mu*self.U*self.derivX.d2f_2D(self.U)))[-1,:]
-            else:
-                self.rhok2[-1,:]  = 0
-                self.rhoUk2[-1,:] = 0
-                self.rhoVk2[-1,:] = 0
-                self.rhoEk2[-1,:] = 0  
-                
-        if self.bcYType == "DIRICHLET":
-                
-            if self.bcY0 == "ADIABATIC_WALL":
-                self.rhok2[:,0] = -self.dt*self.derivY.df_2D(rhoV)[:,0]
-                self.rhoUk2[:,0]  = 0
-                self.rhoVk2[:,0]  = 0
-                self.rhoEk2[:,0]  = (-self.dt*(self.derivY.df_2D(rhoE*self.V + self.V*self.p) -
-                                      (self.mu/self.idealGas.Pr/(self.idealGas.gamma-1))*self.derivY.d2f_2D(self.T) +
-                                      (4/3)*self.mu*self.V*self.derivY.d2f_2D(self.V)))[:,0]
-            else:
-                self.rhok2[:,0]   = 0
-                self.rhoUk2[:,0]  = 0
-                self.rhoVk2[:,0]  = 0
-                self.rhoEk2[:,0]  = 0
-            
-                
-            if self.bcY1 == "ADIABATIC_WALL" or self.bcY1 == "ADIABATIC_MOVINGWALL":
-                self.rhok2[:,-1]  = -self.dt*self.derivY.df_2D(rhoV)[:,-1]
-                self.rhoUk2[:,-1] = 0
-                self.rhoVk2[:,-1] = 0
-                self.rhoEk2[:,-1]  = (-self.dt*(self.derivY.df_2D(rhoE*self.V + self.V*self.p) -
-                                      (self.mu/self.idealGas.Pr/(self.idealGas.gamma-1))*self.derivY.d2f_2D(self.T) +
-                                      (4/3)*self.mu*self.V*self.derivY.d2f_2D(self.V)))[:,-1]
-            else:
-                self.rhok2[:,-1]   = 0
-                self.rhoUk2[:,-1]  = 0
-                self.rhoVk2[:,-1]  = 0
-                self.rhoEk2[:,-1]  = 0
+#        if self.bcYType == "DIRICHLET":
+#                
+#            if self.bcY0 == "ADIABATIC_WALL":
+#                self.rhok2[:,0] = -self.dt*self.derivY.df_2D(rhoV)[:,0]
+#                self.rhoUk2[:,0]  = 0
+#                self.rhoVk2[:,0]  = 0
+#                self.rhoEk2[:,0]  = (-self.dt*(self.derivY.df_2D(rhoE*self.V + self.V*self.p) -
+#                                      (self.mu/self.idealGas.Pr/(self.idealGas.gamma-1))*self.derivY.d2f_2D(self.T) +
+#                                      (4/3)*self.mu*self.V*self.derivY.d2f_2D(self.V)))[:,0]
+#            else:
+#                self.rhok2[:,0]   = 0
+#                self.rhoUk2[:,0]  = 0
+#                self.rhoVk2[:,0]  = 0
+#                self.rhoEk2[:,0]  = 0
+#            
+#                
+#            if self.bcY1 == "ADIABATIC_WALL" or self.bcY1 == "ADIABATIC_MOVINGWALL":
+#                self.rhok2[:,-1]  = -self.dt*self.derivY.df_2D(rhoV)[:,-1]
+#                self.rhoUk2[:,-1] = 0
+#                self.rhoVk2[:,-1] = 0
+#                self.rhoEk2[:,-1]  = (-self.dt*(self.derivY.df_2D(rhoE*self.V + self.V*self.p) -
+#                                      (self.mu/self.idealGas.Pr/(self.idealGas.gamma-1))*self.derivY.d2f_2D(self.T) +
+#                                      (4/3)*self.mu*self.V*self.derivY.d2f_2D(self.V)))[:,-1]
+#            else:
+#                self.rhok2[:,-1]   = 0
+#                self.rhoUk2[:,-1]  = 0
+#                self.rhoVk2[:,-1]  = 0
+#                self.rhoEk2[:,-1]  = 0
     
     def updateConservedData(self,rkStep):
+        
         if rkStep == 1:
             self.rho2  = self.rho1 + self.rhok2/6
             self.rhoU2 = self.rhoU1 + self.rhoUk2/6
             self.rhoV2 = self.rhoV1 + self.rhoVk2/6
+            self.rhoW2 = self.rhoW1 + self.rhoWk2/6
             self.rhoE2 = self.rhoE1 + self.rhoEk2/6
         elif rkStep == 2:
             self.rho2  += self.rhok2/3
             self.rhoU2 += self.rhoUk2/3
             self.rhoV2 += self.rhoVk2/3            
+            self.rhoW2 += self.rhoWk2/3            
             self.rhoE2 += self.rhoEk2/3          
         elif rkStep == 3:
             self.rho2  += self.rhok2/3
             self.rhoU2 += self.rhoUk2/3
             self.rhoV2 += self.rhoVk2/3
+            self.rhoW2 += self.rhoWk2/3
             self.rhoE2 += self.rhoEk2/3               
         elif rkStep == 4:
             self.rho2  += self.rhok2/6
             self.rhoU2 += self.rhoUk2/6
             self.rhoV2 += self.rhoVk2/6
+            self.rhoW2 += self.rhoWk2/6
             self.rhoE2 += self.rhoEk2/6
 
         if rkStep == 1:
             self.rhok  = self.rho1  + self.rhok2/2
             self.rhoUk = self.rhoU1 + self.rhoUk2/2
             self.rhoVk = self.rhoV1 + self.rhoVk2/2
+            self.rhoWk = self.rhoW1 + self.rhoWk2/2
             self.rhoEk = self.rhoE1 + self.rhoEk2/2
         elif rkStep == 2:
             self.rhok  = self.rho1  + self.rhok2/2
             self.rhoUk = self.rhoU1 + self.rhoUk2/2
             self.rhoVk = self.rhoV1 + self.rhoVk2/2
+            self.rhoWk = self.rhoW1 + self.rhoWk2/2
             self.rhoEk = self.rhoE1 + self.rhoEk2/2
         elif rkStep == 3:
             self.rhok  = self.rho1  + self.rhok2
             self.rhoUk = self.rhoU1 + self.rhoUk2
             self.rhoVk = self.rhoV1 + self.rhoVk2
+            self.rhoWk = self.rhoW1 + self.rhoWk2
             self.rhoEk = self.rhoE1 + self.rhoEk2
-            
+        
+        
     def updateNonConservedData(self,rkStep):
         if rkStep == 1 or rkStep == 2 or rkStep == 3:
             self.U = self.rhoUk/self.rhok
             self.V = self.rhoVk/self.rhok
+            self.W = self.rhoWk/self.rhok
             self.p = (self.idealGas.gamma-1)*(self.rhoEk - 
-                         0.5*(self.rhoUk*self.rhoUk + self.rhoVk*self.rhoVk)/self.rhok)
+                         0.5*(self.rhoUk*self.rhoUk + self.rhoVk*self.rhoVk + self.rhoWk*self.rhoWk)/self.rhok)
             self.T = (self.p/(self.rhok*self.idealGas.R_gas))   
             self.mu = self.idealGas.mu_ref*(self.T/self.idealGas.T_ref)**0.76
             self.k  = self.idealGas.cp*self.mu/self.idealGas.Pr
@@ -679,68 +694,114 @@ class CSolver3D:
         elif rkStep == 4:
             self.U = self.rhoU1/self.rho1
             self.V = self.rhoV1/self.rho1
+            self.W = self.rhoW1/self.rho1
             self.p = (self.idealGas.gamma-1)*(self.rhoE1 - 
-                         0.5*(self.rhoU1*self.rhoU1 + self.rhoV1*self.rhoV1)/self.rho1)
+                         0.5*(self.rhoU1*self.rhoU1 + self.rhoV1*self.rhoV1 + self.rhoW1*self.rhoW1)/self.rho1)
             self.T = (self.p/(self.rho1*self.idealGas.R_gas))   
             self.mu = self.idealGas.mu_ref*(self.T/self.idealGas.T_ref)**0.76
             self.k  = self.idealGas.cp*self.mu/self.idealGas.Pr
             self.sos   = np.sqrt(self.idealGas.gamma*self.p/self.rho1)
             self.Amu   = self.idealGas.solveAMu(self.T)
             
-    def filterPrimativeValues(self):
+    def filterConservedValues(self):
         if(self.timeStep%self.filterStep == 0):
             self.numberOfFilterStep += 1
             
+            print(self.rhoV2[0,0,0])
+
+            
             #Need to flip the order of the filtering every other time
-            if self.numberOfFilterStep%2 == 0:
-                self.rho1  = self.filtX.filt_2D(self.rho2)
-                self.rhoU1 = self.filtX.filt_2D(self.rhoU2)
-                self.rhoV1 = self.filtX.filt_2D(self.rhoV2)
-                self.rhoE1 = self.filtX.filt_2D(self.rhoE2)
+            if self.numberOfFilterStep%3 == 1:
                 
-                self.rho1  = self.filtY.filt_2D(self.rho1)
-                self.rhoU1 = self.filtY.filt_2D(self.rhoU1)
-                self.rhoV1 = self.filtY.filt_2D(self.rhoV1)
-                self.rhoE1 = self.filtY.filt_2D(self.rhoE1)
+                print(self.rhoV2[0,0,0])
+                
+                self.rho1  = self.filtX.filt_3D(self.rho2)
+                self.rhoU1 = self.filtX.filt_3D(self.rhoU2)
+                self.rhoV1 = self.filtX.filt_3D(self.rhoV2)
+                self.rhoW1 = self.filtX.filt_3D(self.rhoW2)
+                self.rhoE1 = self.filtX.filt_3D(self.rhoE2)
+                
+                print(self.rhoV2[0,0,0])
+                print(self.rhoV1[0,0,0])
+                
+                self.rho1  = self.filtY.filt_3D(self.rho1)
+                self.rhoU1 = self.filtY.filt_3D(self.rhoU1)
+                self.rhoV1 = self.filtY.filt_3D(self.rhoV1)
+                self.rhoW1 = self.filtY.filt_3D(self.rhoW1)
+                self.rhoE1 = self.filtY.filt_3D(self.rhoE1)
+                
+                self.rho1  = self.filtZ.filt_3D(self.rho1)
+                self.rhoU1 = self.filtZ.filt_3D(self.rhoU1)
+                self.rhoV1 = self.filtZ.filt_3D(self.rhoV1)
+                self.rhoW1 = self.filtZ.filt_3D(self.rhoW1)
+                self.rhoE1 = self.filtZ.filt_3D(self.rhoE1)
+
+            elif self.numberOfFilterStep%3 == 2:
+                self.rho1  = self.filtY.filt_3D(self.rho2)
+                self.rhoU1 = self.filtY.filt_3D(self.rhoU2)
+                self.rhoV1 = self.filtY.filt_3D(self.rhoV2)
+                self.rhoW1 = self.filtY.filt_3D(self.rhoW2)
+                self.rhoE1 = self.filtY.filt_3D(self.rhoE2)
+                
+                self.rho1  = self.filtZ.filt_3D(self.rho1)
+                self.rhoU1 = self.filtZ.filt_3D(self.rhoU1)
+                self.rhoV1 = self.filtZ.filt_3D(self.rhoV1)
+                self.rhoW1 = self.filtZ.filt_3D(self.rhoW1)
+                self.rhoE1 = self.filtZ.filt_3D(self.rhoE1)
+                
+                self.rho1  = self.filtX.filt_3D(self.rho1)
+                self.rhoU1 = self.filtX.filt_3D(self.rhoU1)
+                self.rhoV1 = self.filtX.filt_3D(self.rhoV1)
+                self.rhoW1 = self.filtX.filt_3D(self.rhoW1)
+                self.rhoE1 = self.filtX.filt_3D(self.rhoE1)
             else:
-                self.rho1  = self.filtY.filt_2D(self.rho2)
-                self.rhoU1 = self.filtY.filt_2D(self.rhoU2)
-                self.rhoV1 = self.filtY.filt_2D(self.rhoV2)
-                self.rhoE1 = self.filtY.filt_2D(self.rhoE2)
+                self.rho1  = self.filtZ.filt_3D(self.rho2)
+                self.rhoU1 = self.filtZ.filt_3D(self.rhoU2)
+                self.rhoV1 = self.filtZ.filt_3D(self.rhoV2)
+                self.rhoW1 = self.filtZ.filt_3D(self.rhoW2)
+                self.rhoE1 = self.filtZ.filt_3D(self.rhoE2)
                 
-                self.rho1  = self.filtX.filt_2D(self.rho1)
-                self.rhoU1 = self.filtX.filt_2D(self.rhoU1)
-                self.rhoV1 = self.filtX.filt_2D(self.rhoV1)
-                self.rhoE1 = self.filtX.filt_2D(self.rhoE1)
+                self.rho1  = self.filtX.filt_3D(self.rho1)
+                self.rhoU1 = self.filtX.filt_3D(self.rhoU1)
+                self.rhoV1 = self.filtX.filt_3D(self.rhoV1)
+                self.rhoW1 = self.filtX.filt_3D(self.rhoW1)
+                self.rhoE1 = self.filtX.filt_3D(self.rhoE1)
+                
+                self.rho1  = self.filtY.filt_3D(self.rho1)
+                self.rhoU1 = self.filtY.filt_3D(self.rhoU1)
+                self.rhoV1 = self.filtY.filt_3D(self.rhoV1)
+                self.rhoW1 = self.filtY.filt_3D(self.rhoW1)
+                self.rhoE1 = self.filtY.filt_3D(self.rhoE1)
                 
             print("Filtering...")
         
             #Is there something here that needs to be done about corners for
             #DIRICHLET/DIRICHLET, PERIODIC/DIRICHLET?
-            if self.bcXType == "DIRICHLET":
-                self.rho1[0,:]   = self.rho2[0,:]
-                self.rho1[-1,:]  = self.rho2[-1,:]
-                self.rhoU1[0,:]  = self.rhoU2[0,:]
-                self.rhoU1[-1,:] = self.rhoU2[-1,:]
-                self.rhoV1[0,:]  = self.rhoV2[0,:]
-                self.rhoV1[-1,:] = self.rhoV2[-1,:]            
-                self.rhoE1[0,:]  = self.rhoE2[0,:]
-                self.rhoE1[-1,:] = self.rhoE2[-1,:]
-            
-            if self.bcYType == "DIRICHLET":
-                self.rho1[:,0]   = self.rho2[:,0]
-                self.rho1[:,-1]  = self.rho2[:,-1]
-                self.rhoU1[:,0]  = self.rhoU2[:,0]
-                self.rhoU1[:,-1] = self.rhoU2[:,-1]
-                self.rhoV1[:,0]  = self.rhoV2[:,0]
-                self.rhoV1[:,-1] = self.rhoV2[:,-1]            
-                self.rhoE1[:,0]  = self.rhoE2[:,0]
-                self.rhoE1[:,-1] = self.rhoE2[:,-1]           
+#            if self.bcXType == "DIRICHLET":
+#                self.rho1[0,:]   = self.rho2[0,:]
+#                self.rho1[-1,:]  = self.rho2[-1,:]
+#                self.rhoU1[0,:]  = self.rhoU2[0,:]
+#                self.rhoU1[-1,:] = self.rhoU2[-1,:]
+#                self.rhoV1[0,:]  = self.rhoV2[0,:]
+#                self.rhoV1[-1,:] = self.rhoV2[-1,:]            
+#                self.rhoE1[0,:]  = self.rhoE2[0,:]
+#                self.rhoE1[-1,:] = self.rhoE2[-1,:]
+#            
+#            if self.bcYType == "DIRICHLET":
+#                self.rho1[:,0]   = self.rho2[:,0]
+#                self.rho1[:,-1]  = self.rho2[:,-1]
+#                self.rhoU1[:,0]  = self.rhoU2[:,0]
+#                self.rhoU1[:,-1] = self.rhoU2[:,-1]
+#                self.rhoV1[:,0]  = self.rhoV2[:,0]
+#                self.rhoV1[:,-1] = self.rhoV2[:,-1]            
+#                self.rhoE1[:,0]  = self.rhoE2[:,0]
+#                self.rhoE1[:,-1] = self.rhoE2[:,-1]           
             
         else:
             self.rho1  = self.rho2
             self.rhoU1 = self.rhoU2
             self.rhoV1 = self.rhoV2
+            self.rhoW1 = self.rhoW2
             self.rhoE1 = self.rhoE2
         
             
@@ -750,47 +811,67 @@ class CSolver3D:
             self.spongeBC.spongeRhoAvg  += eps*(self.rho1  - self.spongeBC.spongeRhoAvg)
             self.spongeBC.spongeRhoUAvg += eps*(self.rhoU1 - self.spongeBC.spongeRhoUAvg)
             self.spongeBC.spongeRhoVAvg += eps*(self.rhoV1 - self.spongeBC.spongeRhoVAvg)
+            self.spongeBC.spongeRhoWAvg += eps*(self.rhoW1 - self.spongeBC.spongeRhoWAvg)
             self.spongeBC.spongeRhoEAvg += eps*(self.rhoE1 - self.spongeBC.spongeRhoEAvg)
             self.spongeBC.spongeRhoEAvg = (self.spongeBC.spongeEpsP*self.spongeBC.spongeRhoEAvg + 
                 (1.0 - self.spongeBC.spongeEpsP)*(self.spongeBC.spongeP/(self.idealGas.gamma-1) + 
-                 0.5*(self.spongeBC.spongeRhoUAvg**2 + self.spongeBC.spongeRhoVAvg**2)/self.spongeBC.spongeRhoAvg))
+                 0.5*(self.spongeBC.spongeRhoUAvg**2 + self.spongeBC.spongeRhoVAvg**2 + self.spongeBC.spongeRhoWAvg**2)/self.spongeBC.spongeRhoAvg))
             
             if self.bcX0 == "SPONGE":
-                self.rho1[0,:]   = self.spongeBC.spongeRhoAvg[0,:]
-                self.rhoU1[0,:]  = self.spongeBC.spongeRhoUAvg[0,:]
-                self.rhoV1[0,:]  = self.spongeBC.spongeRhoVAvg[0,:]
-                self.rhoE1[0,:]  = self.spongeBC.spongeRhoEAvg[0,:]
+                self.rho1[0,:,:]   = self.spongeBC.spongeRhoAvg[0,:,:]
+                self.rhoU1[0,:,:]  = self.spongeBC.spongeRhoUAvg[0,:,:]
+                self.rhoV1[0,:,:]  = self.spongeBC.spongeRhoVAvg[0,:,:]
+                self.rhoW1[0,:,:]  = self.spongeBC.spongeRhoWAvg[0,:,:]
+                self.rhoE1[0,:,:]  = self.spongeBC.spongeRhoEAvg[0,:,:]
                 
             if self.bcX1 == "SPONGE": 
-                self.rho1[-1,:]  = self.spongeBC.spongeRhoAvg[-1,:]
-                self.rhoU1[-1,:] = self.spongeBC.spongeRhoUAvg[-1,:]
-                self.rhoV1[-1,:] = self.spongeBC.spongeRhoVAvg[-1,:]
-                self.rhoE1[-1,:] = self.spongeBC.spongeRhoEAvg[-1,:]
+                self.rho1[-1,:,:]  = self.spongeBC.spongeRhoAvg[-1,:,:]
+                self.rhoU1[-1,:,:] = self.spongeBC.spongeRhoUAvg[-1,:,:]
+                self.rhoV1[-1,:,:] = self.spongeBC.spongeRhoVAvg[-1,:,:]
+                self.rhoW1[-1,:,:] = self.spongeBC.spongeRhoWAvg[-1,:,:]
+                self.rhoE1[-1,:,:] = self.spongeBC.spongeRhoEAvg[-1,:,:]
                 
             if self.bcY0 == "SPONGE":
-                self.rho1[:,0]   = self.spongeBC.spongeRhoAvg[:,0]
-                self.rhoU1[:,0]  = self.spongeBC.spongeRhoUAvg[:,0]
-                self.rhoV1[:,0]  = self.spongeBC.spongeRhoVAvg[:,0]
-                self.rhoE1[:,0]  = self.spongeBC.spongeRhoEAvg[:,0]
+                self.rho1[:,0,:]   = self.spongeBC.spongeRhoAvg[:,0,:]
+                self.rhoU1[:,0,:]  = self.spongeBC.spongeRhoUAvg[:,0,:]
+                self.rhoV1[:,0,:]  = self.spongeBC.spongeRhoVAvg[:,0,:]
+                self.rhoW1[:,0,:]  = self.spongeBC.spongeRhoWAvg[:,0,:]
+                self.rhoE1[:,0,:]  = self.spongeBC.spongeRhoEAvg[:,0,:]
                 
             if self.bcY1 == "SPONGE": 
-                self.rho1[:,-1]  = self.spongeBC.spongeRhoAvg[:,-1]
-                self.rhoU1[:,-1] = self.spongeBC.spongeRhoUAvg[:,-1]
-                self.rhoV1[:,-1] = self.spongeBC.spongeRhoVAvg[:,-1]
-                self.rhoE1[:,-1] = self.spongeBC.spongeRhoEAvg[:,-1]  
+                self.rho1[:,-1,:]  = self.spongeBC.spongeRhoAvg[:,-1,:]
+                self.rhoU1[:,-1,:] = self.spongeBC.spongeRhoUAvg[:,-1,:]
+                self.rhoV1[:,-1,:] = self.spongeBC.spongeRhoVAvg[:,-1,:]
+                self.rhoW1[:,-1,:] = self.spongeBC.spongeRhoWAvg[:,-1,:]
+                self.rhoE1[:,-1,:] = self.spongeBC.spongeRhoEAvg[:,-1,:] 
+                
+            if self.bcZ0 == "SPONGE":
+                self.rho1[:,:,0]   = self.spongeBC.spongeRhoAvg[:,:,0]
+                self.rhoU1[:,:,0]  = self.spongeBC.spongeRhoUAvg[:,:,0]
+                self.rhoV1[:,:,0]  = self.spongeBC.spongeRhoVAvg[:,:,0]
+                self.rhoW1[:,:,0]  = self.spongeBC.spongeRhoWAvg[:,:,0]
+                self.rhoE1[:,:,0]  = self.spongeBC.spongeRhoEAvg[:,:,0]
+                
+            if self.bcZ1 == "SPONGE": 
+                self.rho1[:,:,-1]  = self.spongeBC.spongeRhoAvg[:,:,-1]
+                self.rhoU1[:,:,-1] = self.spongeBC.spongeRhoUAvg[:,:,-1]
+                self.rhoV1[:,:,-1] = self.spongeBC.spongeRhoVAvg[:,:,-1]
+                self.rhoW1[:,:,-1] = self.spongeBC.spongeRhoWAvg[:,:,-1]
+                self.rhoE1[:,:,-1] = self.spongeBC.spongeRhoEAvg[:,:,-1]                 
               
     
     def plotFigure(self):
-        #plt.plot(self.x,self.rho1[:,0])
+        plt.plot(self.x,self.rho1[:,0,0])
 #        plt.imshow(np.rot90(self.Vx[1:-2,1:-2] - self.Uy[1:-2,1:-2]), cmap="RdBu",interpolation='bicubic')
 #        plt.imshow(np.rot90(self.Ux[1:-2,1:-2] + self.Ux[1:-2,1:-2]), cmap="RdBu",interpolation='bicubic')
-        plt.imshow(np.rot90(self.U), cmap="RdBu",interpolation='bicubic')
-        plt.colorbar()
-        plt.axis("equal")
+        #plt.imshow(np.rot90(self.U), cmap="RdBu",interpolation='bicubic')
+        #plt.colorbar()
+        #plt.axis("equal")
 
     def checkSolution(self):
         
         print(self.timeStep)
+        print(self.rhoV1[0,0,0])
         
         #Check if we've hit the end of the timestep condition
         if self.timeStep >= self.maxTimeStep:
@@ -804,7 +885,7 @@ class CSolver3D:
             drawnow(self.plotFigure)
             print(self.timeStep)
             
-        if((np.isnan(self.rhoE1)).any() == True or (np.isnan(self.rho1)).any() == True or (np.isnan(self.rhoU1)).any() == True):
+        if((np.isnan(self.rhoE1)).any() == True or (np.isnan(self.rho1)).any() == True or (np.isnan(self.rhoU1)).any() == True or (np.isnan(self.rhoV1)).any() == True or (np.isnan(self.rhoW1)).any() == True):
             self.done = True
             print(-1)
 
