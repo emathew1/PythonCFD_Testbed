@@ -387,6 +387,9 @@ class CSolver3D:
         self.Tyy = self.derivY.d2f_3D(self.T)
         self.Tzz = self.derivZ.d2f_3D(self.T)
 
+        self.MuX = self.Amu*self.Tx
+        self.MuY = self.Amu*self.Ty
+        self.MuZ = self.Amu*self.Tz
         
         #Cross Derivatives
         if self.timeStep%2 == 0:
@@ -420,99 +423,150 @@ class CSolver3D:
 #Actually solving the equations...        
         
     def solveXMomentum_Euler(self, rhoU):
-        return -self.derivX.df_3D(rhoU*self.U + self.p) - self.derivY.df_3D(rhoU*self.V)
-                    -self.derivZ.df_3D(rhoU*self.W)
+        return (-self.derivX.df_3D(rhoU*self.U + self.p) - self.derivY.df_3D(rhoU*self.V)
+                    -self.derivZ.df_3D(rhoU*self.W))
     
     def solveYMomentum_Euler(self, rhoV):
-        return -self.derivX.df_3D(rhoV*self.U) -self.derivY.df_3D(rhoV*self.V + self.p)
-                    -self.derivZ.df_3D(rhoV*self.W)
+        return (-self.derivX.df_3D(rhoV*self.U) -self.derivY.df_3D(rhoV*self.V + self.p)
+                    -self.derivZ.df_3D(rhoV*self.W))
                     
     def solveZMomentum_Euler(self, rhoW):
-        return -self.derivX.df_3D(rhoW*self.U) -self.derivY.df_3D(rhoW*self.V)
-                    -self.derivZ.df_3D(rhoW*self.W + self.p)                    
+        return (-self.derivX.df_3D(rhoW*self.U) -self.derivY.df_3D(rhoW*self.V)
+                    -self.derivZ.df_3D(rhoW*self.W + self.p))              
 
     def solveEnergy_Euler(self, rhoE):
-        return -self.derivX.df_3D(rhoE*self.U + self.U*self.p) 
+        return (-self.derivX.df_3D(rhoE*self.U + self.U*self.p) 
                     - self.derivY.df_3D(rhoE*self.V + self.V*self.p)
-                        - self.derivZ.df_3D(rhoE*self.W + self.W*self.p)
+                        - self.derivZ.df_3D(rhoE*self.W + self.W*self.p))
     
     ##Need to write these out!
     
     def solveXMomentum_Viscous(self):
-        return ((4/3)*self.Amu*self.Tx*self.Ux + (4/3)*self.mu*self.Uxx - (2/3)*self.Amu*self.Tx*self.Vy +
-                  (1/3)*self.mu*self.Vxy + self.Amu*self.Ty*self.Vx + self.Amu*self.Ty*self.Uy + self.mu*self.Uyy);       
+        temp = (4/3)*self.Uxx + self.Uyy + self.Uzz 
+        temp += (1/3)*self.Vxy + (1/3)*self.Wxz
+        temp *= self.mu
+        temp += (4/3)*self.MuX*(self.Ux - (1/2)*self.Vy - (1/2)*self.Wz)
+        temp += self.MuY*(self.Uy + self.Vx)
+        temp += self.MuZ*(self.Wx + self.Uz)
+        return temp      
 
     def solveYMomentum_Viscous(self):
-        return ((4/3)*self.Amu*self.Ty*self.Vy + (4/3)*self.mu*self.Vyy - (2/3)*self.Amu*self.Ty*self.Ux +
-                  (1/3)*self.mu*self.Uxy + self.Amu*self.Tx*self.Uy + self.Amu*self.Tx*self.Vx + self.mu*self.Vxx);
+        temp = self.Vxx + (4/3)*self.Vyy + self.Vzz 
+        temp += (1/3)*self.Uxy + (1/3)*self.Wyz
+        temp *= self.mu
+        temp += (4/3)*self.MuY*(self.Vy - (1/2)*self.Ux - (1/2)*self.Wz)
+        temp += self.MuX*(self.Uy + self.Vx)
+        temp += self.MuZ*(self.Wy + self.Vz)
+        return temp    
+    
+    def solveZMomentum_Viscous(self):
+        temp = self.Wxx + self.Wyy + (4/3)*self.Wzz 
+        temp += (1/3)*self.Uxz + (1/3)*self.Vyz
+        temp *= self.mu
+        temp += (4/3)*self.MuZ*(self.Wz - (1/2)*self.Ux - (1/2)*self.Vy)
+        temp += self.MuX*(self.Wx + self.Uz)
+        temp += self.MuY*(self.Wy + self.Vz)
+        return temp   
 
     def solveEnergy_Viscous(self):
-        return  ((self.idealGas.cp/self.idealGas.Pr)*self.Amu*(self.Tx**2 + self.Ty**2) +
-                    (self.idealGas.cp/self.idealGas.Pr)*self.mu*(self.Txx + self.Tyy)  +
-                    (4/3)*self.mu*(self.Ux**2 + self.Vy**2) + 
-                    (4/3)*self.Amu*(self.U*self.Tx*self.Ux + self.V*self.Ty*self.Vy) +
-                    (4/3)*self.mu*(self.U*self.Uxx + self.V*self.Vyy) - (4/3)*self.mu*self.Ux*self.Vy -
-                    (2/3)*self.Amu*(self.U*self.Tx*self.Vy + self.V*self.Ty*self.Ux) +
-                    (1/3)*self.mu*(self.U*self.Vxy + self.V*self.Uxy) +
-                    self.mu*(self.Uy**2 + self.Vx**2) + 2.*self.mu*(self.Uy*self.Vx) +
-                    self.mu*(self.U*self.Uyy + self.V*self.Vxx) +
-                    self.Amu*(self.V*self.Tx*self.Uy + self.V*self.Tx*self.Vx + 
-                    self.U*self.Ty*self.Uy + self.U*self.Ty*self.Vx))
+        
+        #heat transfer terms
+        qtemp =  self.MuX*self.Tx 
+        qtemp += self.MuY*self.Ty 
+        qtemp += self.MuZ*self.Tz 
+        qtemp += self.mu*self.Txx
+        qtemp += self.mu*self.Tyy
+        qtemp += self.mu*self.Tzz
+        qtemp *= (self.idealGas.cp/self.idealGas.Pr)
+        
+        #terms w/o viscosity derivatives
+        temp1 =  self.U*((4/3)*self.Uxx +      self.Uyy +      self.Uzz)
+        temp1 += self.V*(      self.Vxx +(4/3)*self.Vyy +      self.Vzz)
+        temp1 += self.W*(      self.Wxx +      self.Wyy +(4/3)*self.Wzz)
+        temp1 +=  (4/3)*(self.Ux**2 + self.Vy**2 + self.Wz**2)
+        temp1 += (self.Uy**2 + self.Uz**2)
+        temp1 += (self.Vx**2 + self.Vz**2)
+        temp1 += (self.Wx**2 + self.Wy**2)
+        temp1 += -(4/3)*(self.Ux*self.Vy + self.Ux*self.Wz + self.Vy*self.Wz)
+        temp1 += 2*(self.Uy*self.Vx + self.Uz*self.Wx + self.Vz*self.Wy)
+        temp1 += (1/3)*(self.U*self.Vxy + self.U*self.Wxz + self.V*self.Uxy)
+        temp1 += (1/3)*(self.V*self.Wyz + self.W*self.Uxz + self.W*self.Vyz)
+        temp1 *= self.mu
+        
+        #terms w/ viscosity derivatives
+        temp2 =   (4/3)*(self.U*self.MuX*self.Ux + self.V*self.MuY*self.Vy + self.W*self.MuZ*self.Wz)
+        temp2 += -(2/3)*self.U*self.MuX*(self.Vy + self.Wz)
+        temp2 += -(2/3)*self.V*self.MuY*(self.Ux + self.Wz)
+        temp2 += -(2/3)*self.W*self.MuW*(self.Ux + self.Vy)
+        temp2 += self.U*self.MuY*(self.Uy + self.Vx)
+        temp2 += self.U*self.MuZ*(self.Uz + self.Wx)
+        temp2 += self.V*self.MuX*(self.Uy + self.Vx)
+        temp2 += self.V*self.MuZ*(self.Vz + self.Wy)
+        temp2 += self.W*self.MuX*(self.Uz + self.Wx)
+        temp2 += self.W*self.MuY*(self.Vz + self.Wy)
+        
+        return  qtemp + temp1 + temp2
 
 #Using methods that don't maximize the resolution capabilities of the compact differences
-    def solveContinuity(self, rho, rhoU, rhoV, rhoE):
+    def solveContinuity(self, rho, rhoU, rhoV, rhoW, rhoE):
         
-        drho = (-self.derivX.df_2D(rhoU) - self.derivY.df_2D(rhoV))
+        drho = (-self.derivX.df_3D(rhoU) - self.derivY.df_3D(rhoV) - self.derivZ.df_3D(rhoW))
         
         self.rhok2  = self.dt*(drho + self.calcSpongeSource(rho,"CONT"))
 
-    def solveXMomentum(self, rho, rhoU, rhoV, rhoE):
-        drhoU = (-self.derivX.df_2D(rhoU*self.U + self.p +
-                                    -2*self.mu*self.Ux + (2/3)*self.mu*(self.Ux + self.Vy)) +
-                                         -self.derivY.df_2D(rhoU*self.V -
-                                        self.mu*(self.Vx + self.Uy)))
-    
-        self.rhoUk2 = self.dt*(drhoU + self.calcSpongeSource(rhoU,"XMOM"))            
-            
-    def solveYMomentum(self, rho, rhoU, rhoV, rhoE):
-        
-        drhoV = (-self.derivY.df_2D(rhoV*self.V + self.p +
-                                    -2*self.mu*self.Vy + (2/3)*self.mu*(self.Ux + self.Vy))
-                                         -self.derivX.df_2D(rhoV*self.U -
-                                        self.mu*(self.Vx + self.Uy)) )  
-        
-        self.rhoVk2 = self.dt*(drhoV + self.calcSpongeSource(rhoV,"YMOM"))
-    
-    def solveEnergy(self, rho, rhoU, rhoV, rhoE):
-        drhoE = (-self.derivX.df_2D(rhoE*self.U + self.U*self.p
-                    - (self.mu/self.idealGas.Pr/(self.idealGas.gamma-1))*self.derivX.df_2D(self.T) + 
-                     - self.U*(2*self.mu*self.Ux - (2/3)*self.mu*(self.Ux + self.Vy)) 
-                     - self.V*(self.mu*(self.Vx + self.Uy))) 
-                - self.derivY.df_2D(rhoE*self.V + self.V*self.p 
-                    - (self.mu/self.idealGas.Pr/(self.idealGas.gamma-1))*self.derivY.df_2D(self.T) +
-                     - self.V*(2*self.mu*self.Vy - (2/3)*self.mu*(self.Ux + self.Vy))
-                     - self.U*(self.mu*(self.Vx + self.Uy)))); 
-        
-        
-        self.rhoEk2 = self.dt*(drhoE + self.calcSpongeSource(rhoE,"ENGY"))
+#    def solveXMomentum(self, rho, rhoU, rhoV, rhoE):
+#        drhoU = (-self.derivX.df_2D(rhoU*self.U + self.p +
+#                                    -2*self.mu*self.Ux + (2/3)*self.mu*(self.Ux + self.Vy)) +
+#                                         -self.derivY.df_2D(rhoU*self.V -
+#                                        self.mu*(self.Vx + self.Uy)))
+#    
+#        self.rhoUk2 = self.dt*(drhoU + self.calcSpongeSource(rhoU,"XMOM"))            
+#            
+#    def solveYMomentum(self, rho, rhoU, rhoV, rhoE):
+#        
+#        drhoV = (-self.derivY.df_2D(rhoV*self.V + self.p +
+#                                    -2*self.mu*self.Vy + (2/3)*self.mu*(self.Ux + self.Vy))
+#                                         -self.derivX.df_2D(rhoV*self.U -
+#                                        self.mu*(self.Vx + self.Uy)) )  
+#        
+#        self.rhoVk2 = self.dt*(drhoV + self.calcSpongeSource(rhoV,"YMOM"))
+#    
+#    def solveEnergy(self, rho, rhoU, rhoV, rhoE):
+#        drhoE = (-self.derivX.df_2D(rhoE*self.U + self.U*self.p
+#                    - (self.mu/self.idealGas.Pr/(self.idealGas.gamma-1))*self.derivX.df_2D(self.T) + 
+#                     - self.U*(2*self.mu*self.Ux - (2/3)*self.mu*(self.Ux + self.Vy)) 
+#                     - self.V*(self.mu*(self.Vx + self.Uy))) 
+#                - self.derivY.df_2D(rhoE*self.V + self.V*self.p 
+#                    - (self.mu/self.idealGas.Pr/(self.idealGas.gamma-1))*self.derivY.df_2D(self.T) +
+#                     - self.V*(2*self.mu*self.Vy - (2/3)*self.mu*(self.Ux + self.Vy))
+#                     - self.U*(self.mu*(self.Vx + self.Uy)))); 
+#        
+#        
+#        self.rhoEk2 = self.dt*(drhoE + self.calcSpongeSource(rhoE,"ENGY"))
 
 #Using methods that do take advantage of the the spectral benefits of the compact diff's    
 
-    def solveXMomentum_PV(self, rho, rhoU, rhoV, rhoE):
+    def solveXMomentum_PV(self, rho, rhoU, rhoV, rhoW, rhoE):
         self.rhoUk2 = self.dt*(self.solveXMomentum_Euler(rhoU) +
                                self.solveXMomentum_Viscous() +
                                self.calcSpongeSource(rhoU,"XMOM"))            
 
-    def solveYMomentum_PV(self, rho, rhoU, rhoV, rhoE):
+    def solveYMomentum_PV(self, rho, rhoU, rhoV, rhoW, rhoE):
         self.rhoVk2 = self.dt*(self.solveYMomentum_Euler(rhoV) + 
                                self.solveYMomentum_Viscous() +                               
                                self.calcSpongeSource(rhoV,"YMOM"))
+        
+    def solveZMomentum_PV(self, rho, rhoU, rhoV, rhoW, rhoE):
+        self.rhoWk2 = self.dt*(self.solveZMomentum_Euler(rhoW) + 
+                               self.solveZMomentum_Viscous() +                               
+                               self.calcSpongeSource(rhoW,"ZMOM"))
 
-    def solveEnergy_PV(self, rho, rhoU, rhoV, rhoE):
+    def solveEnergy_PV(self, rho, rhoU, rhoV, rhoW, rhoE):
         self.rhoEk2 = self.dt*(self.solveEnergy_Euler(rhoE) + 
                                self.solveEnergy_Viscous() +                                                              
                                self.calcSpongeSource(rhoE,"ENGY"))
         
+        #Left off here
     
     def postStepBCHandling(self, rho, rhoU, rhoV, rhoE):
         if self.bcXType == "DIRICHLET":
