@@ -9,8 +9,27 @@ Created on Tue Sep 26 21:17:56 2017
 import numpy as np
 import scipy.sparse as spspar
 import scipy.sparse.linalg as spsparlin
+import scipy.linalg.lapack as sll
 import time
 
+#Fast Cyclic Trilinear Solver
+def cyclic2(a, b, bb, c, alpha, beta, r, n, u, x, z):
+
+    gamma = -b[0]
+    bb[0] = b[0]-gamma
+    bb[-1]  = b[-1]-alpha*beta/gamma
+
+    x = sll.dgtsv(a,bb,c,r)[3]
+
+    u[0] = gamma
+    u[-1] = alpha
+
+    z = sll.dgtsv(a,bb,c,u)[3]
+
+    fact = (x[0]+beta*x[-1]/gamma)/(1.0+z[0]+beta*z[-1]/gamma)
+    x = x - fact*z
+
+    return x
 
 #####################
 #####################
