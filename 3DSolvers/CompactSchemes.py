@@ -191,6 +191,11 @@ class CollocatedDeriv:
         self.temp = np.zeros((domain.Nx, domain.Ny, domain.Nz))
         self.createCollocatedDerivMatrices()
         self.dir = dir
+        
+        #Stuff for fast tridiagonal solver
+        self.work1 = np.zeros(N,dtype=np.double)
+        self.work2 = np.zeros(N,dtype=np.double)
+        self.work3 = np.zeros(N,dtype=np.double)
     
     def createCollocatedDerivMatrices(self):
         
@@ -232,6 +237,13 @@ class CollocatedDeriv:
         if typeBC == "PERIODIC":
             LH1D[0,-1] = alpha1D
             LH1D[-1,0] = alpha1D
+            
+            self.a1  = alpha1D*np.ones(N-1)
+            self.b1  = np.ones(N)
+            self.bb1 = np.ones(N)
+            self.c1  = alpha1D*np.ones(N-1)
+            self.cyclicCorner1 = alpha1D
+            
         elif typeBC == "DIRICHLET":
             LH1D[0,1]   = alpha11
             LH1D[1,0]   = alpha21
@@ -239,6 +251,17 @@ class CollocatedDeriv:
             LH1D[-1,-2] = alpha11
             LH1D[-2,-3] = alpha22
             LH1D[-2,-1] = alpha21
+            
+            self.a1  = alpha1D*np.ones(N-1)
+            self.b1  = np.ones(N)
+            self.c1  = alpha1D*np.ones(N-1)
+            self.c1[0] = alpha11
+            self.a1[0] = alpha21
+            self.c1[1] = alpha22
+            self.a1[-1] = alpha11
+            self.a1[-2] = alpha22
+            self.c1[-1] = alpha21
+            
         else:
             raise ValueError('Unknown boundary condition ' + typeBC)
                         
@@ -322,6 +345,13 @@ class CollocatedDeriv:
         if typeBC == "PERIODIC":
             LH2D[0,-1] = alpha2D
             LH2D[-1,0] = alpha2D
+            
+            self.a2  = alpha2D*np.ones(N-1,dtype=np.double)
+            self.b2  = np.ones(N,dtype=np.double)
+            self.bb2 = np.ones(N,dtype=np.double) 
+            self.c2  = alpha2D*np.ones(N-1,dtype=np.double)
+            self.cyclicCorner2 = alpha2D
+            
         elif typeBC == "DIRICHLET":
             LH2D[0,1]   = alpha11
             LH2D[1,0]   = alpha21
@@ -329,6 +359,18 @@ class CollocatedDeriv:
             LH2D[-1,-2] = alpha11
             LH2D[-2,-3] = alpha22
             LH2D[-2,-1] = alpha21
+            
+            self.a2  = alpha2D*np.ones(N-1)
+            self.b2  = np.ones(N)
+            self.c2  = alpha2D*np.ones(N-1)
+            
+            self.c2[0] = alpha11
+            self.a2[0] = alpha21
+            self.c2[1] = alpha22
+            self.a2[-1] = alpha11
+            self.a2[-2] = alpha22
+            self.c2[-1] = alpha21
+            
         else:
             raise ValueError('Unknown boundary condition ' + typeBC)
             
@@ -375,23 +417,39 @@ class CollocatedDeriv:
 
     def compact1stDeriv(self,f): return spsparlin.spsolve(self.LH1D,spspar.csr_matrix.dot(self.RH1D,f))
     def compact2ndDeriv(self,f): return spsparlin.spsolve(self.LH2D,spspar.csr_matrix.dot(self.RH2D,f))
-            
+    
+    def compact1stDeriv_Fast(self,f):
+        if self.typeBC == "PERIODIC":
+            return cyclic2(self.a1, self.b1, self.bb1, self.c1, self.cyclicCorner1,
+                           self.cyclicCorner1, spspar.csr_matrix.dot(self.RH1D,f), 
+                           self.N, self.work1, self.work2, self.work3)
+        elif self.typeBC == "DIRICHLET":
+            return sll.dgtsv(self.a1,self.b1,self.c1,spspar.csr_matrix.dot(self.RH1D,f))[3]
+ 
+    def compact2ndDeriv_Fast(self,f):
+        if self.typeBC == "PERIODIC":
+            return cyclic2(self.a2, self.b2, self.bb2, self.c2, self.cyclicCorner2,
+                           self.cyclicCorner2, spspar.csr_matrix.dot(self.RH2D,f), 
+                           self.N, self.work1, self.work2, self.work3)    
+        elif self.typeBC == "DIRICHLET":
+            return sll.dgtsv(self.a2,self.b2,self.c2,spspar.csr_matrix.dot(self.RH2D,f))[3]
+    
     def df_3D(self,f): 
         
         if self.dir == "X":
             for j in range(self.Ny):
                 for k in range(self.Nz):
-                    self.temp[:,j,k] = self.compact1stDeriv(f[:,j,k])
+                    self.temp[:,j,k] = self.compact1stDeriv_Fast(f[:,j,k])
             return self.temp
         elif self.dir == "Y":
             for i in range(self.Nx):
                 for k in range(self.Nz):
-                    self.temp[i,:,k] = self.compact1stDeriv(f[i,:,k])        
+                    self.temp[i,:,k] = self.compact1stDeriv_Fast(f[i,:,k])        
             return self.temp      
         elif self.dir == "Z":
             for i in range(self.Nx):
                 for j in range(self.Ny):
-                    self.temp[i,j,:] = self.compact1stDeriv(f[i,j,:])        
+                    self.temp[i,j,:] = self.compact1stDeriv_Fast(f[i,j,:])        
             return self.temp           
         else:
             print("Unknown direction")
@@ -401,17 +459,17 @@ class CollocatedDeriv:
         if self.dir == "X":
             for j in range(self.Ny):
                 for k in range(self.Nz):
-                    self.temp[:,j,k] = self.compact2ndDeriv(f[:,j,k])
+                    self.temp[:,j,k] = self.compact2ndDeriv_Fast(f[:,j,k])
             return self.temp
         elif self.dir == "Y":
             for i in range(self.Nx):
                 for k in range(self.Nz):
-                    self.temp[i,:,k] = self.compact2ndDeriv(f[i,:,k])        
+                    self.temp[i,:,k] = self.compact2ndDeriv_Fast(f[i,:,k])        
             return self.temp      
         elif self.dir == "Z":
             for i in range(self.Nx):
                 for j in range(self.Ny):
-                    self.temp[i,j,:] = self.compact2ndDeriv(f[i,j,:])        
+                    self.temp[i,j,:] = self.compact2ndDeriv_Fast(f[i,j,:])        
             return self.temp           
         else:
             print("Unknown direction")
@@ -478,6 +536,10 @@ class CompactFilter:
         self.typeBC = typeBC        
         self.createFilterMatrices()
         self.dir = dir
+        
+        self.work1 = np.zeros(N,dtype=np.double)
+        self.work2 = np.zeros(N,dtype=np.double)
+        self.work3 = np.zeros(N,dtype=np.double)
 
     
     def createFilterMatrices(self):
@@ -511,6 +573,13 @@ class CompactFilter:
         if typeBC == "PERIODIC":
             LHF[0,-1] = alphaF
             LHF[-1,0] = alphaF
+            
+            self.aF  = alphaF*np.ones(N-1,dtype=np.double)
+            self.bF  = np.ones(N,dtype=np.double)
+            self.bbF = np.ones(N,dtype=np.double) 
+            self.cF  = alphaF*np.ones(N-1,dtype=np.double)
+            self.cyclicCornerF = alphaF
+            
         elif typeBC == "DIRICHLET":
             #Explicitly filter the boundary points (Lele)
             LHF[0,1] = 0
@@ -631,23 +700,28 @@ class CompactFilter:
     
     def compactFilter(self,f): return spsparlin.spsolve(self.LHF,spspar.csr_matrix.dot(self.RHF,f))
     
+    def compactFilter_Fast(self,f):
+        if self.typeBC == "PERIODIC":
+            return cyclic2(self.aF, self.bF, self.bbF, self.cF, self.cyclicCornerF,
+                           self.cyclicCornerF, spspar.csr_matrix.dot(self.RHF,f), 
+                           self.N, self.work1, self.work2, self.work3)
             
     def filt_3D(self,f):
         temp = np.zeros((self.Nx,self.Ny,self.Nz))
         if self.dir == "X":
             for j in range(self.Ny):
                 for k in range(self.Nz):
-                    temp[:,j,k] = self.compactFilter(f[:,j,k])
+                    temp[:,j,k] = self.compactFilter_Fast(f[:,j,k])
             return temp
         elif self.dir == "Y":
             for i in range(self.Nx):
                 for k in range(self.Nz):
-                    temp[i,:,k] = self.compactFilter(f[i,:,k])        
+                    temp[i,:,k] = self.compactFilter_Fast(f[i,:,k])        
             return temp      
         elif self.dir == "Z":
             for i in range(self.Nx):
                 for j in range(self.Ny):
-                    temp[i,j,:] = self.compactFilter(f[i,j,:])        
+                    temp[i,j,:] = self.compactFilter_Fast(f[i,j,:])        
             return temp           
         else:
             print("Unknown direction")
