@@ -16,12 +16,12 @@ from CollocatedSolver import CSolver3D
 plt.ion()
 
 #Domain information
-Nx = 100    
-Ny = 8
-Nz = 8
+Nx = 32    
+Ny = 32
+Nz = 32
 Lx = 1.0
-Ly = 0.1
-Lz = 0.1
+Ly = 1.0
+Lz = 1.0
 x = np.linspace(0,Lx,Nx)
 y = np.linspace(0,Ly,Ny)
 z = np.linspace(0,Lz,Nz)
@@ -29,15 +29,15 @@ domain = Domain3D(Nx, Ny, Nz, x, y, z, Lx, Ly, Lz)
 [X, Y, Z] = np.meshgrid(x, y, z)
 
 #Boundary Condition information
-bcXType = "PERIODIC"
-bcX0 = "PERIODIC"
-bcX1 = "PERIODIC"
-bcYType = "PERIODIC"
-bcY0 = "PERIODIC"
-bcY1 = "PERIODIC"
-bcZType = "PERIODIC"
-bcZ0 = "PERIODIC"
-bcZ1 = "PERIODIC"
+bcXType = "DIRICHLET"
+bcX0 = "ADIABATIC_WALL"
+bcX1 = "ADIABATIC_WALL"
+bcYType = "DIRICHLET"
+bcY0 = "ADIABATIC_WALL"
+bcY1 = "ADIABATIC_WALL"
+bcZType = "DIRICHLET"
+bcZ0 = "ADIABATIC_WALL"
+bcZ1 = "ADIABATIC_WALL"
 bc = BC3D(bcXType, bcX0, bcX1, bcYType, bcY0, bcY1, bcZType, bcZ0, bcZ1)
 
 #Time stepping information
@@ -74,28 +74,28 @@ p0   = np.ones((Nx,Ny,Nz))
 for i in range(Nx):
     for j in range(Ny):
         for k in range(Nz):
-                U0[i,j,k] = 0.0
-                V0[i,j,k] = 0.0
-                W0[i,j,k] = 0.0
-                if x[i] < 0.5:
-                    rho0[i,j,k] = 1.0
-                    p0[i,j,k] = 1.0/csolver.idealGas.gamma 
-                else:
-                    rho0[i,j,k] = 0.125
-                    p0[i,j,k] = 0.1/csolver.idealGas.gamma
-            
-#            if x[i] > Lx/4 and x[i] < 3*Lx/4:
-#                U0[i,j,k]   = 0.0
-#                V0[i,j,k]   = 0.0
-#                W0[i,j,k]   = 0.0
-#                rho0[i,j,k] = 1 + 0.05*np.exp(-((x[i]-(Lx/2))**2 + (y[j]-(Ly/3))**2)/0.001)
-#                p0[i,j,k]   = (1 + 0.005*np.exp(-((x[i]-(Lx/2))**2 + (y[j]-(Ly/3))**2)/0.001))/csolver.idealGas.gamma
-#            else:
-#                U0[i,j,k]   = 0.0
-#                V0[i,j,k]   = 0.0
-#                W0[i,j,k]   = 0.0
-#                rho0[i,j,k] = 1.0
-#                p0[i,j,k]   = 1.0/csolver.idealGas.gamma
+#                U0[i,j,k] = 0.0
+#                V0[i,j,k] = 0.0
+#                W0[i,j,k] = 0.0
+#                if x[i] < 0.5:
+#                    rho0[i,j,k] = 1.0
+#                    p0[i,j,k] = 1.0/csolver.idealGas.gamma 
+#                else:
+#                    rho0[i,j,k] = 0.125
+#                    p0[i,j,k] = 0.1/csolver.idealGas.gamma
+#            
+            if x[i] > Lx/4 and x[i] < 3*Lx/4:
+                U0[i,j,k]   = 0.0
+                V0[i,j,k]   = 0.0
+                W0[i,j,k]   = 0.0
+                rho0[i,j,k] = 1 + 0.005*np.exp(-((x[i]-(Lx/2))**2 + (y[j]-(Ly/2))**2)/0.001)
+                p0[i,j,k]   = (1 + 0.005*np.exp(-((x[i]-(Lx/2))**2 + (y[j]-(Ly/2))**2)/0.001))/csolver.idealGas.gamma
+            else:
+                U0[i,j,k]   = 0.0
+                V0[i,j,k]   = 0.0
+                W0[i,j,k]   = 0.0
+                rho0[i,j,k] = 1.0
+                p0[i,j,k]   = 1.0/csolver.idealGas.gamma
 
 #Set the initial conditions in the solver        
 csolver.setInitialConditions(rho0, U0, V0, W0, p0)

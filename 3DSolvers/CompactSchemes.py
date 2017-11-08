@@ -580,6 +580,23 @@ class CompactFilter:
             LHF[-2,-3] = 0
             LHF[-3,-2] = 0
             LHF[-3,-4] = 0
+            
+            self.aF  = alphaF*np.ones(N-1,dtype=np.double)
+            self.bF  = np.ones(N,dtype=np.double)
+            self.cF  = alphaF*np.ones(N-1,dtype=np.double)
+            
+            self.aF[0] = 0
+            self.aF[1] = 0
+            self.cF[0] = 0
+            self.cF[1] = 0
+            self.cF[2] = 0
+
+            self.aF[-1] = 0
+            self.aF[-2] = 0
+            self.aF[-3] = 0
+            self.cF[-1] = 0
+            self.cF[-2] = 0
+            
         else:
             raise ValueError('Unknown boundary condition ' + typeBC)
             
@@ -692,6 +709,8 @@ class CompactFilter:
             return cyclic2(self.aF, self.bF, self.bbF, self.cF, self.cyclicCornerF,
                            self.cyclicCornerF, spspar.csr_matrix.dot(self.RHF,f), 
                            self.N, self.work1, self.work2, self.work3)
+        elif self.typeBC == "DIRICHLET":
+            return sll.dgtsv(self.aF,self.bF,self.cF,spspar.csr_matrix.dot(self.RHF,f))[3]
             
     def filt_3D(self,f):
         temp = np.zeros((self.Nx,self.Ny,self.Nz))

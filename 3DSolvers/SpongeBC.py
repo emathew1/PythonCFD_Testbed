@@ -93,7 +93,7 @@ class SpongeBC3D:
                             self.spongeSigma[i,j,k] = max(self.spongeStrength * (0.068*(spongeZ)**2 
                                     + 0.845*(spongeZ)**8), self.spongeSigma[i,j,k])   
                     
-        if self.bcYZ1 == "SPONGE":
+        if self.bcZ1 == "SPONGE":
             for k in range(self.Nz):
                 if self.z[k] > self.Lz - self.spongeLengthZ:
                     spongeZ = (self.z[k]-(self.Lz-self.spongeLengthZ))/self.spongeLengthZ

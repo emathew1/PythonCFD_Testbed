@@ -1008,12 +1008,12 @@ class CSolver3D:
               
     
     def plotFigure(self):
-        plt.plot(self.x,self.rho1[:,0,0])
+#        plt.plot(self.x,self.rho1[:,0,0])
 #        plt.imshow(np.rot90(self.Vx[1:-2,1:-2] - self.Uy[1:-2,1:-2]), cmap="RdBu",interpolation='bicubic')
 #        plt.imshow(np.rot90(self.Ux[1:-2,1:-2] + self.Ux[1:-2,1:-2]), cmap="RdBu",interpolation='bicubic')
-        #plt.imshow(np.rot90(self.U), cmap="RdBu",interpolation='bicubic')
-        #plt.colorbar()
-        #plt.axis("equal")
+        plt.imshow(np.rot90(self.p[:,:,16]), cmap="RdBu",interpolation='bicubic')
+        plt.colorbar()
+        plt.axis("equal")
 
     def checkSolution(self):
         
