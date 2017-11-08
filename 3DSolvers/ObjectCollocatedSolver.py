@@ -16,7 +16,7 @@ from CollocatedSolver import CSolver3D
 plt.ion()
 
 #Domain information
-Nx = 50    
+Nx = 100    
 Ny = 8
 Nz = 8
 Lx = 1.0
@@ -41,8 +41,8 @@ bcZ1 = "PERIODIC"
 bc = BC3D(bcXType, bcX0, bcX1, bcYType, bcY0, bcY1, bcZType, bcZ0, bcZ1)
 
 #Time stepping information
-CFL = 0.15
-maxTimeStep = 10
+CFL = 0.25
+maxTimeStep = 1000
 maxTime = 1000
 plotStep = 1
 filterStep = 1
@@ -51,7 +51,7 @@ timestepping = TimeStepping(CFL, maxTimeStep, maxTime, plotStep, filterStep)
 #Filtering stuff
 alphaF = 0.45
 #Fluid stuff
-mu_ref = 0.01
+mu_ref = 0.0000001
 
 ##Ghia results
 #yy = np.array([0.0, 0.0547, 0.0625, 0.0703, 0.1016, 0.1719, 0.2813, 0.4531, 0.50, 0.6172, 0.7344, 0.8516,  0.9531, 0.9609, 0.9688, 0.9766, 1.0])
@@ -74,28 +74,28 @@ p0   = np.ones((Nx,Ny,Nz))
 for i in range(Nx):
     for j in range(Ny):
         for k in range(Nz):
-#                U0[i,j,k] = 0.0
-#                V0[i,j,k] = 0.0
-#                W0[i,j,k] = 0.0
-#                if x[i] > 0.5:
-#                    rho0[i,j,k] = 1.0
-#                    p0[i,j,k] = 1.0/csolver.idealGas.gamma 
-#                else:
-#                    rho0[i,j,k] = 0.825
-#                    p0[i,j,k] = 0.8/csolver.idealGas.gamma
+                U0[i,j,k] = 0.0
+                V0[i,j,k] = 0.0
+                W0[i,j,k] = 0.0
+                if x[i] < 0.5:
+                    rho0[i,j,k] = 1.0
+                    p0[i,j,k] = 1.0/csolver.idealGas.gamma 
+                else:
+                    rho0[i,j,k] = 0.125
+                    p0[i,j,k] = 0.1/csolver.idealGas.gamma
             
-            if x[i] > Lx/4 and x[i] < 3*Lx/4:
-                U0[i,j,k]   = 0.0
-                V0[i,j,k]   = 0.0
-                W0[i,j,k]   = 0.0
-                rho0[i,j,k] = 1 + 0.05*np.exp(-((x[i]-(Lx/2))**2 + (y[j]-(Ly/3))**2)/0.001)
-                p0[i,j,k]   = (1 + 0.005*np.exp(-((x[i]-(Lx/2))**2 + (y[j]-(Ly/3))**2)/0.001))/csolver.idealGas.gamma
-            else:
-                U0[i,j,k]   = 0.0
-                V0[i,j,k]   = 0.0
-                W0[i,j,k]   = 0.0
-                rho0[i,j,k] = 1.0
-                p0[i,j,k]   = 1.0/csolver.idealGas.gamma
+#            if x[i] > Lx/4 and x[i] < 3*Lx/4:
+#                U0[i,j,k]   = 0.0
+#                V0[i,j,k]   = 0.0
+#                W0[i,j,k]   = 0.0
+#                rho0[i,j,k] = 1 + 0.05*np.exp(-((x[i]-(Lx/2))**2 + (y[j]-(Ly/3))**2)/0.001)
+#                p0[i,j,k]   = (1 + 0.005*np.exp(-((x[i]-(Lx/2))**2 + (y[j]-(Ly/3))**2)/0.001))/csolver.idealGas.gamma
+#            else:
+#                U0[i,j,k]   = 0.0
+#                V0[i,j,k]   = 0.0
+#                W0[i,j,k]   = 0.0
+#                rho0[i,j,k] = 1.0
+#                p0[i,j,k]   = 1.0/csolver.idealGas.gamma
 
 #Set the initial conditions in the solver        
 csolver.setInitialConditions(rho0, U0, V0, W0, p0)
@@ -107,7 +107,7 @@ while csolver.done == False:
     #RK Step 1
     rkStep = 1
     
-    #csolver.preStepBCHandling(csolver.rho1, csolver.rhoU1, csolver.rhoV1, csolver.rhoW1, csolver.rhoE1)
+    csolver.preStepBCHandling(csolver.rho1, csolver.rhoU1, csolver.rhoV1, csolver.rhoW1, csolver.rhoE1)
     
     csolver.preStepDerivatives()
     
@@ -116,16 +116,16 @@ while csolver.done == False:
     csolver.solveYMomentum_PV(csolver.rho1, csolver.rhoU1, csolver.rhoV1, csolver.rhoW1, csolver.rhoE1)
     csolver.solveZMomentum_PV(csolver.rho1, csolver.rhoU1, csolver.rhoV1, csolver.rhoW1, csolver.rhoE1)        
     csolver.solveEnergy_PV(csolver.rho1, csolver.rhoU1, csolver.rhoV1, csolver.rhoW1, csolver.rhoE1)
-#
-#    #csolver.postStepBCHandling(csolver.rho1, csolver.rhoU1, csolver.rhoV1, csolver.rhoW1, csolver.rhoE1)
-#    
+
+    csolver.postStepBCHandling(csolver.rho1, csolver.rhoU1, csolver.rhoV1, csolver.rhoW1, csolver.rhoE1)
+   
     csolver.updateConservedData(rkStep)
     csolver.updateNonConservedData(rkStep)
 
     #RK Step 2
     rkStep = 2
     
-    #csolver.preStepBCHandling(csolver.rhok, csolver.rhoUk, csolver.rhoVk, csolver.rhoWk, csolver.rhoEk)
+    csolver.preStepBCHandling(csolver.rhok, csolver.rhoUk, csolver.rhoVk, csolver.rhoWk, csolver.rhoEk)
     
     csolver.preStepDerivatives()
     
@@ -135,7 +135,7 @@ while csolver.done == False:
     csolver.solveZMomentum_PV(csolver.rhok, csolver.rhoUk, csolver.rhoVk, csolver.rhoWk, csolver.rhoEk)
     csolver.solveEnergy_PV(csolver.rhok, csolver.rhoUk, csolver.rhoVk, csolver.rhoWk, csolver.rhoEk)
     
-    #csolver.postStepBCHandling(csolver.rhok, csolver.rhoUk, csolver.rhoVk, csolver.rhoWk, csolver.rhoEk)
+    csolver.postStepBCHandling(csolver.rhok, csolver.rhoUk, csolver.rhoVk, csolver.rhoWk, csolver.rhoEk)
 
     csolver.updateConservedData(rkStep)
     csolver.updateNonConservedData(rkStep)   
@@ -143,7 +143,7 @@ while csolver.done == False:
     #RK Step 3
     rkStep = 3
     
-    #csolver.preStepBCHandling(csolver.rhok, csolver.rhoUk, csolver.rhoVk, csolver.rhoWk, csolver.rhoEk)
+    csolver.preStepBCHandling(csolver.rhok, csolver.rhoUk, csolver.rhoVk, csolver.rhoWk, csolver.rhoEk)
     
     csolver.preStepDerivatives()
     
@@ -153,7 +153,7 @@ while csolver.done == False:
     csolver.solveZMomentum_PV(csolver.rhok, csolver.rhoUk, csolver.rhoVk, csolver.rhoWk, csolver.rhoEk)
     csolver.solveEnergy_PV(csolver.rhok, csolver.rhoUk, csolver.rhoVk, csolver.rhoWk, csolver.rhoEk)
     
-    #csolver.postStepBCHandling(csolver.rhok, csolver.rhoUk, csolver.rhoVk, csolver.rhoWk, csolver.rhoEk)
+    csolver.postStepBCHandling(csolver.rhok, csolver.rhoUk, csolver.rhoVk, csolver.rhoWk, csolver.rhoEk)
 
     csolver.updateConservedData(rkStep)
     csolver.updateNonConservedData(rkStep)    
@@ -162,7 +162,7 @@ while csolver.done == False:
     #RK Step 4
     rkStep = 4
     
-    #csolver.preStepBCHandling(csolver.rhok, csolver.rhoUk, csolver.rhoVk, csolver.rhoWk, csolver.rhoEk)
+    csolver.preStepBCHandling(csolver.rhok, csolver.rhoUk, csolver.rhoVk, csolver.rhoWk, csolver.rhoEk)
     
     csolver.preStepDerivatives()
     
@@ -172,7 +172,7 @@ while csolver.done == False:
     csolver.solveZMomentum_PV(csolver.rhok, csolver.rhoUk, csolver.rhoVk, csolver.rhoWk, csolver.rhoEk)
     csolver.solveEnergy_PV(csolver.rhok, csolver.rhoUk, csolver.rhoVk, csolver.rhoWk, csolver.rhoEk)
     
-    #csolver.postStepBCHandling(csolver.rhok, csolver.rhoUk, csolver.rhoVk, csolver.rhoWk, csolver.rhoEk)
+    csolver.postStepBCHandling(csolver.rhok, csolver.rhoUk, csolver.rhoVk, csolver.rhoWk, csolver.rhoEk)
 
     csolver.updateConservedData(rkStep)    
 

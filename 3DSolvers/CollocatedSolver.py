@@ -110,78 +110,78 @@ class CSolver3D:
         self.bcZ1 = bc.bcZ1
         
         #initial conditions
-        self.U0   = np.zeros((self.Nx, self.Ny, self.Nz))
-        self.V0   = np.zeros((self.Nx, self.Ny, self.Nz))
-        self.W0   = np.zeros((self.Nx, self.Ny, self.Nz))
-        self.rho0 = np.zeros((self.Nx, self.Ny, self.Nz))
-        self.p0   = np.zeros((self.Nx, self.Ny, self.Nz))
+        self.U0   = np.zeros((self.Nx, self.Ny, self.Nz),dtype=np.double)
+        self.V0   = np.zeros((self.Nx, self.Ny, self.Nz),dtype=np.double)
+        self.W0   = np.zeros((self.Nx, self.Ny, self.Nz),dtype=np.double)
+        self.rho0 = np.zeros((self.Nx, self.Ny, self.Nz),dtype=np.double)
+        self.p0   = np.zeros((self.Nx, self.Ny, self.Nz),dtype=np.double)
         
         #non-conserved data
-        self.U   = np.zeros((self.Nx, self.Ny, self.Nz))
-        self.V   = np.zeros((self.Nx, self.Ny, self.Nz))
-        self.W   = np.zeros((self.Nx, self.Ny, self.Nz))
-        self.T   = np.zeros((self.Nx, self.Ny, self.Nz))
-        self.p   = np.zeros((self.Nx, self.Ny, self.Nz))
-        self.mu  = np.zeros((self.Nx, self.Ny, self.Nz))
-        self.k   = np.zeros((self.Nx, self.Ny, self.Nz))
-        self.sos = np.zeros((self.Nx, self.Ny, self.Nz))
+        self.U   = np.zeros((self.Nx, self.Ny, self.Nz),dtype=np.double)
+        self.V   = np.zeros((self.Nx, self.Ny, self.Nz),dtype=np.double)
+        self.W   = np.zeros((self.Nx, self.Ny, self.Nz),dtype=np.double)
+        self.T   = np.zeros((self.Nx, self.Ny, self.Nz),dtype=np.double)
+        self.p   = np.zeros((self.Nx, self.Ny, self.Nz),dtype=np.double)
+        self.mu  = np.zeros((self.Nx, self.Ny, self.Nz),dtype=np.double)
+        self.k   = np.zeros((self.Nx, self.Ny, self.Nz),dtype=np.double)
+        self.sos = np.zeros((self.Nx, self.Ny, self.Nz),dtype=np.double)
         
         #Derivatives of Data
-        self.Ux  = np.zeros((self.Nx, self.Ny, self.Nz))
-        self.Uy  = np.zeros((self.Nx, self.Ny, self.Nz))
-        self.Uz  = np.zeros((self.Nx, self.Ny, self.Nz))
-        self.Uxx = np.zeros((self.Nx, self.Ny, self.Nz))
-        self.Uyy = np.zeros((self.Nx, self.Ny, self.Nz))
-        self.Uzz = np.zeros((self.Nx, self.Ny, self.Nz))        
-        self.Uxy = np.zeros((self.Nx, self.Ny, self.Nz))
-        self.Uxz = np.zeros((self.Nx, self.Ny, self.Nz))        
-        self.Uyz = np.zeros((self.Nx, self.Ny, self.Nz))
+        self.Ux  = np.zeros((self.Nx, self.Ny, self.Nz),dtype=np.double)
+        self.Uy  = np.zeros((self.Nx, self.Ny, self.Nz),dtype=np.double)
+        self.Uz  = np.zeros((self.Nx, self.Ny, self.Nz),dtype=np.double)
+        self.Uxx = np.zeros((self.Nx, self.Ny, self.Nz),dtype=np.double)
+        self.Uyy = np.zeros((self.Nx, self.Ny, self.Nz),dtype=np.double)
+        self.Uzz = np.zeros((self.Nx, self.Ny, self.Nz),dtype=np.double)        
+        self.Uxy = np.zeros((self.Nx, self.Ny, self.Nz),dtype=np.double)
+        self.Uxz = np.zeros((self.Nx, self.Ny, self.Nz),dtype=np.double)        
+        self.Uyz = np.zeros((self.Nx, self.Ny, self.Nz),dtype=np.double)
         
-        self.Vx   = np.zeros((self.Nx, self.Ny, self.Nz))
-        self.Vy   = np.zeros((self.Nx, self.Ny, self.Nz))
-        self.Vz   = np.zeros((self.Nx, self.Ny, self.Nz))        
-        self.Vxx  = np.zeros((self.Nx, self.Ny, self.Nz))
-        self.Vyy  = np.zeros((self.Nx, self.Ny, self.Nz))
-        self.Vzz  = np.zeros((self.Nx, self.Ny, self.Nz))
-        self.Vxy  = np.zeros((self.Nx, self.Ny, self.Nz))
-        self.Vxz  = np.zeros((self.Nx, self.Ny, self.Nz))
-        self.Vyz  = np.zeros((self.Nx, self.Ny, self.Nz))
+        self.Vx   = np.zeros((self.Nx, self.Ny, self.Nz),dtype=np.double)
+        self.Vy   = np.zeros((self.Nx, self.Ny, self.Nz),dtype=np.double)
+        self.Vz   = np.zeros((self.Nx, self.Ny, self.Nz),dtype=np.double)        
+        self.Vxx  = np.zeros((self.Nx, self.Ny, self.Nz),dtype=np.double)
+        self.Vyy  = np.zeros((self.Nx, self.Ny, self.Nz),dtype=np.double)
+        self.Vzz  = np.zeros((self.Nx, self.Ny, self.Nz),dtype=np.double)
+        self.Vxy  = np.zeros((self.Nx, self.Ny, self.Nz),dtype=np.double)
+        self.Vxz  = np.zeros((self.Nx, self.Ny, self.Nz),dtype=np.double)
+        self.Vyz  = np.zeros((self.Nx, self.Ny, self.Nz),dtype=np.double)
         
-        self.Tx  = np.zeros((self.Nx, self.Ny, self.Nz))
-        self.Ty  = np.zeros((self.Nx, self.Ny, self.Nz))
-        self.Tz  = np.zeros((self.Nx, self.Ny, self.Nz))
-        self.Txx = np.zeros((self.Nx, self.Ny, self.Nz))
-        self.Tyy = np.zeros((self.Nx, self.Ny, self.Nz))
-        self.Tzz = np.zeros((self.Nx, self.Ny, self.Nz))
+        self.Tx  = np.zeros((self.Nx, self.Ny, self.Nz),dtype=np.double)
+        self.Ty  = np.zeros((self.Nx, self.Ny, self.Nz),dtype=np.double)
+        self.Tz  = np.zeros((self.Nx, self.Ny, self.Nz),dtype=np.double)
+        self.Txx = np.zeros((self.Nx, self.Ny, self.Nz),dtype=np.double)
+        self.Tyy = np.zeros((self.Nx, self.Ny, self.Nz),dtype=np.double)
+        self.Tzz = np.zeros((self.Nx, self.Ny, self.Nz),dtype=np.double)
         
-        self.MuX = np.zeros((self.Nx, self.Ny, self.Nz))
-        self.MuY = np.zeros((self.Nx, self.Ny, self.Nz))
-        self.MuZ = np.zeros((self.Nx, self.Ny, self.Nz))
+        self.MuX = np.zeros((self.Nx, self.Ny, self.Nz),dtype=np.double)
+        self.MuY = np.zeros((self.Nx, self.Ny, self.Nz),dtype=np.double)
+        self.MuZ = np.zeros((self.Nx, self.Ny, self.Nz),dtype=np.double)
         
         #conserved data
-        self.rho1  = np.zeros((self.Nx, self.Ny, self.Nz))
-        self.rhoU1 = np.zeros((self.Nx, self.Ny, self.Nz))
-        self.rhoV1 = np.zeros((self.Nx, self.Ny, self.Nz))
-        self.rhoW1 = np.zeros((self.Nx, self.Ny, self.Nz))
-        self.rhoE1 = np.zeros((self.Nx, self.Ny, self.Nz))
+        self.rho1  = np.zeros((self.Nx, self.Ny, self.Nz),dtype=np.double)
+        self.rhoU1 = np.zeros((self.Nx, self.Ny, self.Nz),dtype=np.double)
+        self.rhoV1 = np.zeros((self.Nx, self.Ny, self.Nz),dtype=np.double)
+        self.rhoW1 = np.zeros((self.Nx, self.Ny, self.Nz),dtype=np.double)
+        self.rhoE1 = np.zeros((self.Nx, self.Ny, self.Nz),dtype=np.double)
         
-        self.rhok  = np.zeros((self.Nx, self.Ny, self.Nz))
-        self.rhoUk = np.zeros((self.Nx, self.Ny, self.Nz))
-        self.rhoVk = np.zeros((self.Nx, self.Ny, self.Nz))
-        self.rhoWk = np.zeros((self.Nx, self.Ny, self.Nz))
-        self.rhoEk = np.zeros((self.Nx, self.Ny, self.Nz))
+        self.rhok  = np.zeros((self.Nx, self.Ny, self.Nz),dtype=np.double)
+        self.rhoUk = np.zeros((self.Nx, self.Ny, self.Nz),dtype=np.double)
+        self.rhoVk = np.zeros((self.Nx, self.Ny, self.Nz),dtype=np.double)
+        self.rhoWk = np.zeros((self.Nx, self.Ny, self.Nz),dtype=np.double)
+        self.rhoEk = np.zeros((self.Nx, self.Ny, self.Nz),dtype=np.double)
 
-        self.rhok2  = np.zeros((self.Nx, self.Ny, self.Nz))
-        self.rhoUk2 = np.zeros((self.Nx, self.Ny, self.Nz))
-        self.rhoVk2 = np.zeros((self.Nx, self.Ny, self.Nz))
-        self.rhoWk2 = np.zeros((self.Nx, self.Ny, self.Nz))       
-        self.rhoEk2 = np.zeros((self.Nx, self.Ny, self.Nz))        
+        self.rhok2  = np.zeros((self.Nx, self.Ny, self.Nz),dtype=np.double)
+        self.rhoUk2 = np.zeros((self.Nx, self.Ny, self.Nz),dtype=np.double)
+        self.rhoVk2 = np.zeros((self.Nx, self.Ny, self.Nz),dtype=np.double)
+        self.rhoWk2 = np.zeros((self.Nx, self.Ny, self.Nz),dtype=np.double)       
+        self.rhoEk2 = np.zeros((self.Nx, self.Ny, self.Nz),dtype=np.double)        
         
-        self.rho2  = np.zeros((self.Nx, self.Ny, self.Nz))
-        self.rhoU2 = np.zeros((self.Nx, self.Ny, self.Nz))
-        self.rhoV2 = np.zeros((self.Nx, self.Ny, self.Nz))
-        self.rhoW2 = np.zeros((self.Nx, self.Ny, self.Nz))
-        self.rhoE2 = np.zeros((self.Nx, self.Ny, self.Nz))
+        self.rho2  = np.zeros((self.Nx, self.Ny, self.Nz),dtype=np.double)
+        self.rhoU2 = np.zeros((self.Nx, self.Ny, self.Nz),dtype=np.double)
+        self.rhoV2 = np.zeros((self.Nx, self.Ny, self.Nz),dtype=np.double)
+        self.rhoW2 = np.zeros((self.Nx, self.Ny, self.Nz),dtype=np.double)
+        self.rhoE2 = np.zeros((self.Nx, self.Ny, self.Nz),dtype=np.double)
         
         #time data
         self.timeStep = 0
@@ -234,33 +234,72 @@ class CSolver3D:
         self.k     = self.idealGas.solveK(self.mu)
         self.sos   = self.idealGas.solveSOS(self.rho1, self.p)
         
-#        if self.bcX0 == "ADIABATIC_WALL":
-#            self.T[0,:]  = self.derivX.calcNeumann0(self.T)
-#            self.U[0,:]  = 0.0
-#            self.rhoU1[0,:]  = 0.0
-#            self.V[0,:]  = 0.0
-#            self.rhoV1[0,:]  = 0.0
-#            
-#        if self.bcX1 == "ADIABATIC_WALL":
-#            self.T[-1,:] = self.derivX.calcNeumannEnd(self.T)
-#            self.U[-1,:] = 0.0
-#            self.rhoU1[-1,:] = 0.0
-#            self.V[-1,:] = 0.0
-#            self.rhoV1[-1,:] = 0.0
-#            
-#        if self.bcY0 == "ADIABATIC_WALL":
-#            self.T[:,0]  = self.derivY.calcNeumann0(self.T)
-#            self.U[:,0]  = 0.0
-#            self.rhoU1[:,0]  = 0.0
-#            self.V[:,0]  = 0.0
-#            self.rhoV1[:,0]  = 0.0
-#            
-#        if self.bcY1 == "ADIABATIC_WALL":
-#            self.T[:,-1]  = self.derivY.calcNeumannEnd(self.T)
-#            self.U[:,-1]  = 0.0
-#            self.rhoU1[:,-1]  = 0.0
-#            self.V[:,-1]  = 0.0
-#            self.rhoV1[:,-1]  = 0.0   
+        if self.bcX0 == "ADIABATIC_WALL":           
+            for jp in range(self.Ny):
+                for kp in range(self.Nz):
+                    self.T[0,jp,kp]  = self.derivX.calcNeumann0(self.T[:,jp,kp])
+            self.U[0,:,:] = 0.0
+            self.V[0,:,:] = 0.0
+            self.W[0,:,:]  = 0.0
+            self.rhoU1[0,:,:]  = 0.0
+            self.rhoV1[0,:,:]  = 0.0
+            self.rhoW1[0,:,:]  = 0.0            
+            
+        if self.bcX1 == "ADIABATIC_WALL":
+            for jp in range(self.Ny):
+                for kp in range(self.Nz):
+                    self.T[-1,jp,kp]  = self.derivX.calcNeumannEnd(self.T[:,jp,kp])
+            self.U[-1,:,:] = 0.0
+            self.V[-1,:,:] = 0.0    
+            self.W[-1,:,:] = 0.0                        
+            self.rhoU1[-1,:,:] = 0.0
+            self.rhoV1[-1,:,:] = 0.0
+            self.rhoW1[-1,:,:] = 0.0
+            
+        if self.bcY0 == "ADIABATIC_WALL":
+            for ip in range(self.Nx):
+                for kp in range(self.Nz):
+                    self.T[ip,0,kp]  = self.derivY.calcNeumann0(self.T[ip,:,kp])
+            self.U[:,0,:]  = 0.0
+            self.V[:,0,:]  = 0.0
+            self.W[:,0,:]  = 0.0
+            self.rhoU1[:,0,:]  = 0.0
+            self.rhoV1[:,0,:]  = 0.0
+            self.rhoW1[:,0,:]  = 0.0 
+           
+        if self.bcY1 == "ADIABATIC_WALL":
+            for ip in range(self.Nx):
+                for kp in range(self.Nz):
+                    self.T[ip,-1,kp]  = self.derivY.calcNeumannEnd(self.T[ip,:,kp])
+            self.U[:,-1,:]  = 0.0
+            self.V[:,-1,:]  = 0.0
+            self.W[:,-1,:]  = 0.0
+            self.rhoU1[:,-1,:]  = 0.0
+            self.rhoV1[:,-1,:]  = 0.0   
+            self.rhoW1[:,-1,:]  = 0.0   
+            
+        if self.bcZ0 == "ADIABATIC_WALL":
+            for ip in range(self.Nx):
+                for jp in range(self.Ny):
+                    self.T[ip,jp,0]  = self.derivZ.calcNeumann0(self.T[ip,jp,:])
+            self.U[:,:,0]  = 0.0
+            self.V[:,:,0]  = 0.0
+            self.W[:,:,0]  = 0.0
+            self.rhoU1[:,:,0]  = 0.0
+            self.rhoV1[:,:,0]  = 0.0
+            self.rhoW1[:,:,0]  = 0.0 
+           
+        if self.bcZ1 == "ADIABATIC_WALL":
+            for ip in range(self.Nx):
+                for jp in range(self.Ny):
+                    self.T[ip,jp,-1]  = self.derivZ.calcNeumannEnd(self.T[ip,jp,:])
+            self.U[:,:,-1]  = 0.0
+            self.V[:,:,-1]  = 0.0
+            self.W[:,:,-1]  = 0.0
+            self.rhoU1[:,:,-1]  = 0.0
+            self.rhoV1[:,:,-1]  = 0.0   
+            self.rhoW1[:,:,-1]  = 0.0  
+            
 #            
 #        if self.bcY1 == "ADIABATIC_MOVINGWALL":
 #            self.T[:,-1]  = self.derivY.calcNeumannEnd(self.T)
@@ -268,12 +307,18 @@ class CSolver3D:
 #            self.rhoU1[:,-1]  = self.rho1[:,-1]*self.Uwall
 #            self.V[:,-1]  = 0.0
 #            self.rhoV1[:,-1]  = 0.0 
-#
-#        if self.bcX0 == "ADIABATIC_WALL" or self.bcX1 == "ADIABATIC_WALL" or self.bcY0 == "ADIABATIC_WALL" or self.bcY1 == "ADIABATIC_WALL" or self.bcY1 == "ADIABATIC_MOVINGWALL":
-#            self.p     = self.idealGas.solvePIdealGas(self.rho1, self.T)
-#            self.sos   = self.idealGas.solveSOS(self.rho1, self.p)
-#            self.rhoE1 = self.idealGas.solveRhoE(self.rho1, self.U, self.V, self.p)            
-#            
+
+        if (   self.bcX0 == "ADIABATIC_WALL" 
+            or self.bcX1 == "ADIABATIC_WALL" 
+            or self.bcY0 == "ADIABATIC_WALL" 
+            or self.bcY1 == "ADIABATIC_WALL" 
+            or self.bcZ0 == "ADIABATIC_WALL" 
+            or self.bcZ1 == "ADIABATIC_WALL"             
+            or self.bcY1 == "ADIABATIC_MOVINGWALL"):
+            self.p     = self.idealGas.solvePIdealGas(self.rho1, self.T)
+            self.sos   = self.idealGas.solveSOS(self.rho1, self.p)
+            self.rhoE1 = self.idealGas.solveRhoE(self.rho1, self.U, self.V, self.W, self.p)            
+            
         if self.spongeFlag == True: 
             self.spongeBC.spongeRhoAvg  = self.rho1
             self.spongeBC.spongeRhoUAvg = self.rhoU1
@@ -312,40 +357,81 @@ class CSolver3D:
             source = 0
         return source
     
-#    def preStepBCHandling(self, rho, rhoU, rhoV, rhoW, rhoE):
+    def preStepBCHandling(self, rho, rhoU, rhoV, rhoW, rhoE):
         
-#        if self.bcX0 == "ADIABATIC_WALL":
-#            self.U[0,:]  = 0.0
-#            rhoU[0,:]    = 0.0
-#            self.V[0,:]  = 0.0
-#            rhoV[0,:]    = 0.0
-#            self.T[0,:]  = self.derivX.calcNeumann0(self.T)
-#            self.p[0,:]  = self.idealGas.solvePIdealGas(rho[0,:],self.T[0,:])
-#        
-#        if self.bcX1 == "ADIABATIC_WALL":
-#            self.U[-1,:] = 0.0
-#            rhoU[-1,:]   = 0.0
-#            self.V[-1,:] = 0.0
-#            rhoV[-1,:]   = 0.0
-#            self.T[-1,:] = self.derivX.calcNeumannEnd(self.T)
-#            self.p[-1,:] = self.idealGas.solvePIdealGas(rho[-1,:],self.T[-1,:])
-#
-#        if self.bcY0 == "ADIABATIC_WALL":
-#            self.U[:,0]  = 0.0
-#            rhoU[:,0]    = 0.0
-#            self.V[:,0]  = 0.0
-#            rhoV[:,0]    = 0.0
-#            self.T[:,0]  = self.derivY.calcNeumann0(self.T)
-#            self.p[:,0]  = self.idealGas.solvePIdealGas(rho[:,0],self.T[:,0])
-#    
-#        if self.bcY1 == "ADIABATIC_WALL":
-#            self.U[:,-1]  = 0.0
-#            rhoU[:,-1]    = 0.0
-#            self.V[:,-1]  = 0.0
-#            rhoV[:,-1]    = 0.0
-#            self.T[:,-1]  = self.derivY.calcNeumannEnd(self.T)
-#            self.p[:,-1]  = self.idealGas.solvePIdealGas(rho[:,-1],self.T[:,-1])
-# 
+        if self.bcX0 == "ADIABATIC_WALL":
+            self.U[0,:,:]  = 0.0
+            self.V[0,:,:]  = 0.0
+            self.W[0,:,:]  = 0.0
+            rhoU[0,:,:]    = 0.0
+            rhoV[0,:,:]    = 0.0
+            rhoW[0,:,:]    = 0.0
+            for jp in range(self.Ny):
+                for kp in range(self.Nz):
+                    self.T[0,jp,kp]  = self.derivX.calcNeumann0(self.T[:,jp,kp])
+            self.p[0,:,:]  = self.idealGas.solvePIdealGas(rho[0,:,:],self.T[0,:,:])
+        
+        if self.bcX1 == "ADIABATIC_WALL":
+            self.U[-1,:,:] = 0.0
+            self.V[-1,:,:] = 0.0
+            self.W[-1,:,:] = 0.0
+            rhoU[-1,:,:]   = 0.0
+            rhoV[-1,:,:]   = 0.0
+            rhoW[-1,:,:]   = 0.0
+            for jp in range(self.Ny):
+                for kp in range(self.Nz):
+                    self.T[-1,jp,kp] = self.derivX.calcNeumannEnd(self.T[:,jp,kp])
+            self.p[-1,:,:] = self.idealGas.solvePIdealGas(rho[-1,:,:],self.T[-1,:,:])
+
+        if self.bcY0 == "ADIABATIC_WALL":
+            self.U[:,0,:]  = 0.0
+            self.V[:,0,:]  = 0.0
+            self.W[:,0,:]  = 0.0
+            rhoU[:,0,:]    = 0.0
+            rhoV[:,0,:]    = 0.0
+            rhoW[:,0,:]    = 0.0
+            for ip in range(self.Nx):
+                for kp in range(self.Nz):
+                    self.T[ip,0,kp]  = self.derivY.calcNeumann0(self.T[ip,:,kp])
+            self.p[:,0,:]  = self.idealGas.solvePIdealGas(rho[:,0,:],self.T[:,0,:])
+    
+        if self.bcY1 == "ADIABATIC_WALL":
+            self.U[:,-1,:]  = 0.0
+            self.V[:,-1,:]  = 0.0
+            self.W[:,-1,:]  = 0.0
+            rhoU[:,-1,:]    = 0.0
+            rhoV[:,-1,:]    = 0.0
+            rhoW[:,-1,:]    = 0.0
+            for ip in range(self.Nx):
+                for kp in range(self.Nz):
+                    self.T[ip,-1,kp]  = self.derivY.calcNeumannEnd(self.T[ip,:,kp])
+            self.p[:,-1,:]  = self.idealGas.solvePIdealGas(rho[:,-1,:],self.T[:,-1,:])
+
+        if self.bcZ0 == "ADIABATIC_WALL":
+            self.U[:,:,0]  = 0.0
+            self.V[:,:,0]  = 0.0
+            self.W[:,:,0]  = 0.0
+            rhoU[:,:,0]    = 0.0
+            rhoV[:,:,0]    = 0.0
+            rhoW[:,:,0]    = 0.0
+            for ip in range(self.Nx):
+                for jp in range(self.Ny):
+                    self.T[ip,jp,0]  = self.derivZ.calcNeumann0(self.T[ip,jp,:])
+            self.p[:,:,0]  = self.idealGas.solvePIdealGas(rho[:,:,0],self.T[:,:,0])
+    
+        if self.bcZ1 == "ADIABATIC_WALL":
+            self.U[:,:,-1]  = 0.0
+            self.V[:,:,-1]  = 0.0
+            self.W[:,:,-1]  = 0.0
+            rhoU[:,:,-1]    = 0.0
+            rhoV[:,:,-1]    = 0.0
+            rhoW[:,:,-1]    = 0.0
+            for ip in range(self.Nx):
+                for jp in range(self.Ny):
+                    self.T[ip,jp,-1]  = self.derivZ.calcNeumannEnd(self.T[ip,jp,:])
+            self.p[:,:,-1]  = self.idealGas.solvePIdealGas(rho[:,:,-1],self.T[:,:,-1])
+ 
+ 
 #        if self.bcY1 == "ADIABATIC_MOVINGWALL":
 #            self.U[:,-1]  = self.Uwall
 #            rhoU[:,-1]    = rho[:,-1]*self.Uwall
@@ -397,31 +483,31 @@ class CSolver3D:
         
         #Cross Derivatives
         if self.timeStep%2 == 0:
-            self.Uxy = self.derivX.df_3D(self.derivY.df_3D(self.U))
-            self.Vxy = self.derivX.df_3D(self.derivY.df_3D(self.V))
-            self.Wxy = self.derivX.df_3D(self.derivY.df_3D(self.W))
+            self.Uxy = self.derivX.df_3D(self.Uy)
+            self.Vxy = self.derivX.df_3D(self.Vy)
+            self.Wxy = self.derivX.df_3D(self.Wy)
         else:
-            self.Uxy = self.derivY.df_3D(self.derivX.df_3D(self.U))
-            self.Vxy = self.derivY.df_3D(self.derivX.df_3D(self.V))  
-            self.Wxy = self.derivY.df_3D(self.derivX.df_3D(self.W))
+            self.Uxy = self.derivY.df_3D(self.Ux)
+            self.Vxy = self.derivY.df_3D(self.Vx)  
+            self.Wxy = self.derivY.df_3D(self.Wx)
             
         if self.timeStep%2 == 0:
-            self.Uyz = self.derivY.df_3D(self.derivZ.df_3D(self.U))
-            self.Vyz = self.derivY.df_3D(self.derivZ.df_3D(self.V))
-            self.Wyz = self.derivY.df_3D(self.derivZ.df_3D(self.W))
+            self.Uyz = self.derivY.df_3D(self.Uz)
+            self.Vyz = self.derivY.df_3D(self.Vz)
+            self.Wyz = self.derivY.df_3D(self.Wz)
         else:
-            self.Uyz = self.derivZ.df_3D(self.derivY.df_3D(self.U))
-            self.Vyz = self.derivZ.df_3D(self.derivY.df_3D(self.V))  
-            self.Wyz = self.derivZ.df_3D(self.derivY.df_3D(self.W))
+            self.Uyz = self.derivZ.df_3D(self.Uy)
+            self.Vyz = self.derivZ.df_3D(self.Vy)  
+            self.Wyz = self.derivZ.df_3D(self.Wy)
             
         if self.timeStep%2 == 0:
-            self.Uxz = self.derivX.df_3D(self.derivZ.df_3D(self.U))
-            self.Vxz = self.derivX.df_3D(self.derivZ.df_3D(self.V))
-            self.Wxz = self.derivX.df_3D(self.derivZ.df_3D(self.W))
+            self.Uxz = self.derivX.df_3D(self.Uz)
+            self.Vxz = self.derivX.df_3D(self.Vz)
+            self.Wxz = self.derivX.df_3D(self.Wz)
         else:
-            self.Uxz = self.derivZ.df_3D(self.derivX.df_3D(self.U))
-            self.Vxz = self.derivZ.df_3D(self.derivX.df_3D(self.V))  
-            self.Wxz = self.derivZ.df_3D(self.derivX.df_3D(self.W))           
+            self.Uxz = self.derivZ.df_3D(self.Ux)
+            self.Vxz = self.derivZ.df_3D(self.Vx)  
+            self.Wxz = self.derivZ.df_3D(self.Wx)           
             
         
 #Actually solving the equations...        
@@ -572,64 +658,117 @@ class CSolver3D:
         
         #Left off here
     
-#    def postStepBCHandling(self, rho, rhoU, rhoV, rhoE):
+    def postStepBCHandling(self, rho, rhoU, rhoV, rhoW, rhoE):
         
-#        if self.bcXType == "DIRICHLET":
+        if self.bcXType == "DIRICHLET":
             
-#            if self.bcX0 == "ADIABATIC_WALL":
-#                self.rhok2[0,:] = -self.dt*self.derivX.df_2D(rhoU)[0,:]
-#                self.rhoUk2[0,:]  = 0
-#                self.rhoVk2[0,:]  = 0
-#                self.rhoEk2[0,:]  = (-self.dt*(self.derivX.df_2D(rhoE*self.U + self.U*self.p) -
-#                                      (self.mu/self.idealGas.Pr/(self.idealGas.gamma-1))*self.derivX.d2f_2D(self.T) +
-#                                      (4/3)*self.mu*self.U*self.derivX.d2f_2D(self.U)))[0,:]
-#            else:
-#                self.rhok2[0,:]   = 0
-#                self.rhoUk2[0,:]  = 0
-#                self.rhoVk2[0,:]  = 0
-#                self.rhoEk2[0,:]  = 0
-#                
-#            if self.bcX1 == "ADIABATIC_WALL":
-#                self.rhok2[-1,:]  = -self.dt*self.derivX.df_2D(rhoU)[-1,:]
-#                self.rhoUk2[-1,:] = 0
-#                self.rhoVk2[-1,:] = 0
-#                self.rhoEk2[-1,:] = (-self.dt*(self.derivX.df_2D(rhoE*self.U + self.U*self.p) -
-#                                      (self.mu/self.idealGas.Pr/(self.idealGas.gamma-1))*self.derivX.d2f_2D(self.T) +
-#                                      (4/3)*self.mu*self.U*self.derivX.d2f_2D(self.U)))[-1,:]
-#            else:
-#                self.rhok2[-1,:]  = 0
-#                self.rhoUk2[-1,:] = 0
-#                self.rhoVk2[-1,:] = 0
-#                self.rhoEk2[-1,:] = 0  
+            if self.bcX0 == "ADIABATIC_WALL":
+                for jp in range(self.Ny):
+                    for kp in range(self.Nz):
+                        self.rhok2[0,jp,kp] = -self.dt*self.derivX.compact1stDeriv_Fast(rhoU[:,jp,kp])[0]
+                        self.rhoUk2[0,jp,kp]  = 0
+                        self.rhoVk2[0,jp,kp]  = 0
+                        self.rhoWk2[0,jp,kp]  = 0
+                        self.rhoEk2[0,jp,kp]  = (-self.dt*(self.derivX.compact1stDeriv_Fast(rhoE[:,jp,kp]*self.U[:,jp,kp] + self.U[:,jp,kp]*self.p[:,jp,kp]) -
+                                      (self.mu[:,jp,kp]/self.idealGas.Pr/(self.idealGas.gamma-1))*self.derivX.compact2ndDeriv_Fast(self.T[:,jp,kp]) +
+                                      (4/3)*self.mu[:,jp,kp]*self.U[:,jp,kp]*self.derivX.compact2ndDeriv_Fast(self.U[:,jp,kp])))[0]
+            else:
+                self.rhok2[0,:,:]   = 0
+                self.rhoUk2[0,:,:]  = 0
+                self.rhoVk2[0,:,:]  = 0
+                self.rhoWk2[0,:,:]  = 0
+                self.rhoEk2[0,:,:]  = 0
                 
-#        if self.bcYType == "DIRICHLET":
-#                
-#            if self.bcY0 == "ADIABATIC_WALL":
-#                self.rhok2[:,0] = -self.dt*self.derivY.df_2D(rhoV)[:,0]
-#                self.rhoUk2[:,0]  = 0
-#                self.rhoVk2[:,0]  = 0
-#                self.rhoEk2[:,0]  = (-self.dt*(self.derivY.df_2D(rhoE*self.V + self.V*self.p) -
-#                                      (self.mu/self.idealGas.Pr/(self.idealGas.gamma-1))*self.derivY.d2f_2D(self.T) +
-#                                      (4/3)*self.mu*self.V*self.derivY.d2f_2D(self.V)))[:,0]
-#            else:
-#                self.rhok2[:,0]   = 0
-#                self.rhoUk2[:,0]  = 0
-#                self.rhoVk2[:,0]  = 0
-#                self.rhoEk2[:,0]  = 0
-#            
-#                
-#            if self.bcY1 == "ADIABATIC_WALL" or self.bcY1 == "ADIABATIC_MOVINGWALL":
-#                self.rhok2[:,-1]  = -self.dt*self.derivY.df_2D(rhoV)[:,-1]
-#                self.rhoUk2[:,-1] = 0
-#                self.rhoVk2[:,-1] = 0
-#                self.rhoEk2[:,-1]  = (-self.dt*(self.derivY.df_2D(rhoE*self.V + self.V*self.p) -
-#                                      (self.mu/self.idealGas.Pr/(self.idealGas.gamma-1))*self.derivY.d2f_2D(self.T) +
-#                                      (4/3)*self.mu*self.V*self.derivY.d2f_2D(self.V)))[:,-1]
-#            else:
-#                self.rhok2[:,-1]   = 0
-#                self.rhoUk2[:,-1]  = 0
-#                self.rhoVk2[:,-1]  = 0
-#                self.rhoEk2[:,-1]  = 0
+            if self.bcX1 == "ADIABATIC_WALL":
+                for jp in range(self.Ny):
+                    for kp in range(self.Nz):
+                        self.rhok2[-1,jp,kp]  = -self.dt*self.derivX.compact1stDeriv_Fast(rhoU[:,jp,kp])[-1]
+                        self.rhoUk2[-1,jp,kp] = 0
+                        self.rhoVk2[-1,jp,kp] = 0
+                        self.rhoWk2[-1,jp,kp] = 0
+                        self.rhoEk2[-1,jp,kp] = (-self.dt*(self.derivX.compact1stDeriv_Fast(rhoE[:,jp,kp]*self.U[:,jp,kp] + self.U[:,jp,kp]*self.p[:,jp,kp]) -
+                                      (self.mu[:,jp,kp]/self.idealGas.Pr/(self.idealGas.gamma-1))*self.derivX.compact2ndDeriv_Fast(self.T[:,jp,kp]) +
+                                      (4/3)*self.mu[:,jp,kp]*self.U[:,jp,kp]*self.derivX.compact2ndDeriv_Fast(self.U[:,jp,kp])))[-1]
+            else:
+                self.rhok2[-1,:,:]  = 0
+                self.rhoUk2[-1,:,:] = 0
+                self.rhoVk2[-1,:,:] = 0
+                self.rhoWk2[-1,:,:] = 0
+                self.rhoEk2[-1,:,:] = 0  
+                
+        if self.bcYType == "DIRICHLET":
+                
+            if self.bcY0 == "ADIABATIC_WALL":
+                for ip in range(self.Nx):
+                    for kp in range(self.Nz):
+                        self.rhok2[ip,0,kp]  = -self.dt*self.derivY.compact1stDeriv_Fast(rhoV[ip,:,kp])[0]
+                        self.rhoUk2[ip,0,kp] = 0
+                        self.rhoVk2[ip,0,kp] = 0
+                        self.rhoWk2[ip,0,kp] = 0
+                        self.rhoEk2[ip,0,kp] = (-self.dt*(self.derivY.compact1stDeriv_Fast(rhoE[ip,:,kp]*self.V[ip,:,kp] + self.V[ip,:,kp]*self.p[ip,:,kp]) -
+                                              (self.mu[ip,:,kp]/self.idealGas.Pr/(self.idealGas.gamma-1))*self.derivY.compact2ndDeriv_Fast(self.T[ip,:,kp]) +
+                                              (4/3)*self.mu[ip,:,kp]*self.V[ip,:,kp]*self.derivY.compact2ndDeriv_Fast(self.V[ip,:,kp])))[0]
+            else:
+                self.rhok2[:,0,:]   = 0
+                self.rhoUk2[:,0,:]  = 0
+                self.rhoVk2[:,0,:]  = 0
+                self.rhoWk2[:,0,:]  = 0                
+                self.rhoEk2[:,0,:]  = 0
+            
+                
+            if self.bcY1 == "ADIABATIC_WALL" or self.bcY1 == "ADIABATIC_MOVINGWALL":
+                for ip in range(self.Nx):
+                    for kp in range(self.Nz):
+                        self.rhok2[ip,-1,kp]  = -self.dt*self.derivY.compact1stDeriv_Fast(rhoV[ip,:,kp])[-1]
+                        self.rhoUk2[ip,-1,kp] = 0
+                        self.rhoVk2[ip,-1,kp] = 0
+                        self.rhoWk2[ip,-1,kp] = 0
+                        self.rhoEk2[ip,-1,kp] = (-self.dt*(self.derivY.compact1stDeriv_Fast(rhoE[ip,:,kp]*self.V[ip,:,kp] + self.V[ip,:,kp]*self.p[ip,:,kp]) -
+                                              (self.mu[ip,:,kp]/self.idealGas.Pr/(self.idealGas.gamma-1))*self.derivY.compact2ndDeriv_Fast(self.T[ip,:,kp]) +
+                                              (4/3)*self.mu[ip,:,kp]*self.V[ip,:,kp]*self.derivY.compact2ndDeriv_Fast(self.V[ip,:,kp])))[-1]
+            else:
+                self.rhok2[:,-1,:]   = 0
+                self.rhoUk2[:,-1,:]  = 0
+                self.rhoVk2[:,-1,:]  = 0
+                self.rhoWk2[:,-1,:]  = 0
+                self.rhoEk2[:,-1,:]  = 0
+                
+        if self.bcZType == "DIRICHLET":
+                
+            if self.bcZ0 == "ADIABATIC_WALL":
+                for ip in range(self.Nx):
+                    for jp in range(self.Ny):
+                        self.rhok2[ip,jp,0]  = -self.dt*self.derivZ.compact1stDeriv_Fast(rhoW[ip,jp,:])[0]
+                        self.rhoUk2[ip,jp,0] = 0
+                        self.rhoVk2[ip,jp,0] = 0
+                        self.rhoWk2[ip,jp,0] = 0
+                        self.rhoEk2[ip,jp,0] = (-self.dt*(self.derivZ.compact1stDeriv_Fast(rhoE[ip,jp,:]*self.W[ip,jp,:] + self.W[ip,jp,:]*self.p[ip,jp,:]) -
+                                              (self.mu[ip,jp,:]/self.idealGas.Pr/(self.idealGas.gamma-1))*self.derivZ.compact2ndDeriv_Fast(self.T[ip,jp,:]) +
+                                              (4/3)*self.mu[ip,jp,:]*self.W[ip,jp,:]*self.derivZ.compact2ndDeriv_Fast(self.W[ip,jp,:])))[0]
+            else:
+                self.rhok2[:,:,0]   = 0
+                self.rhoUk2[:,:,0]  = 0
+                self.rhoVk2[:,:,0]  = 0
+                self.rhoWk2[:,:,0]  = 0                
+                self.rhoEk2[:,:,0]  = 0
+            
+                
+            if self.bcZ1 == "ADIABATIC_WALL":
+                for ip in range(self.Nx):
+                    for jp in range(self.Ny):
+                        self.rhok2[ip,jp,-1]  = -self.dt*self.derivZ.compact1stDeriv_Fast(rhoW[ip,jp,:])[-1]
+                        self.rhoUk2[ip,jp,-1] = 0
+                        self.rhoVk2[ip,jp,-1] = 0
+                        self.rhoWk2[ip,jp,-1] = 0
+                        self.rhoEk2[ip,jp,-1] = (-self.dt*(self.derivZ.compact1stDeriv_Fast(rhoE[ip,jp,:]*self.W[ip,jp,:] + self.W[ip,jp,:]*self.p[ip,jp,:]) -
+                                              (self.mu[ip,jp,:]/self.idealGas.Pr/(self.idealGas.gamma-1))*self.derivZ.compact2ndDeriv_Fast(self.T[ip,jp,:]) +
+                                              (4/3)*self.mu[ip,jp,:]*self.W[ip,jp,:]*self.derivZ.compact2ndDeriv_Fast(self.W[ip,jp,:])))[-1]
+            else:
+                self.rhok2[:,:,-1]   = 0
+                self.rhoUk2[:,:,-1]  = 0
+                self.rhoVk2[:,:,-1]  = 0
+                self.rhoWk2[:,:,-1]  = 0                
+                self.rhoEk2[:,:,-1]  = 0
     
     def updateConservedData(self,rkStep):
         
@@ -707,22 +846,14 @@ class CSolver3D:
         if(self.timeStep%self.filterStep == 0):
             self.numberOfFilterStep += 1
             
-            print(self.rhoV2[0,0,0])
-
-            
             #Need to flip the order of the filtering every other time
             if self.numberOfFilterStep%3 == 1:
-                
-                print(self.rhoV2[0,0,0])
-                
+                                
                 self.rho1  = self.filtX.filt_3D(self.rho2)
                 self.rhoU1 = self.filtX.filt_3D(self.rhoU2)
                 self.rhoV1 = self.filtX.filt_3D(self.rhoV2)
                 self.rhoW1 = self.filtX.filt_3D(self.rhoW2)
                 self.rhoE1 = self.filtX.filt_3D(self.rhoE2)
-                
-                print(self.rhoV2[0,0,0])
-                print(self.rhoV1[0,0,0])
                 
                 self.rho1  = self.filtY.filt_3D(self.rho1)
                 self.rhoU1 = self.filtY.filt_3D(self.rhoU1)
@@ -777,25 +908,41 @@ class CSolver3D:
         
             #Is there something here that needs to be done about corners for
             #DIRICHLET/DIRICHLET, PERIODIC/DIRICHLET?
-#            if self.bcXType == "DIRICHLET":
-#                self.rho1[0,:]   = self.rho2[0,:]
-#                self.rho1[-1,:]  = self.rho2[-1,:]
-#                self.rhoU1[0,:]  = self.rhoU2[0,:]
-#                self.rhoU1[-1,:] = self.rhoU2[-1,:]
-#                self.rhoV1[0,:]  = self.rhoV2[0,:]
-#                self.rhoV1[-1,:] = self.rhoV2[-1,:]            
-#                self.rhoE1[0,:]  = self.rhoE2[0,:]
-#                self.rhoE1[-1,:] = self.rhoE2[-1,:]
-#            
-#            if self.bcYType == "DIRICHLET":
-#                self.rho1[:,0]   = self.rho2[:,0]
-#                self.rho1[:,-1]  = self.rho2[:,-1]
-#                self.rhoU1[:,0]  = self.rhoU2[:,0]
-#                self.rhoU1[:,-1] = self.rhoU2[:,-1]
-#                self.rhoV1[:,0]  = self.rhoV2[:,0]
-#                self.rhoV1[:,-1] = self.rhoV2[:,-1]            
-#                self.rhoE1[:,0]  = self.rhoE2[:,0]
-#                self.rhoE1[:,-1] = self.rhoE2[:,-1]           
+            if self.bcXType == "DIRICHLET":
+                self.rho1[0,:,:]   = self.rho2[0,:,:]
+                self.rho1[-1,:,:]  = self.rho2[-1,:,:]
+                self.rhoU1[0,:,:]  = self.rhoU2[0,:,:]
+                self.rhoU1[-1,:,:] = self.rhoU2[-1,:,:]
+                self.rhoV1[0,:,:]  = self.rhoV2[0,:,:]
+                self.rhoV1[-1,:,:] = self.rhoV2[-1,:,:]   
+                self.rhoW1[0,:,:]  = self.rhoW2[0,:,:]
+                self.rhoW1[-1,:,:] = self.rhoW2[-1,:,:]
+                self.rhoE1[0,:,:]  = self.rhoE2[0,:,:]
+                self.rhoE1[-1,:,:] = self.rhoE2[-1,:,:]
+            
+            if self.bcYType == "DIRICHLET":
+                self.rho1[:,0,:]   = self.rho2[:,0,:]
+                self.rho1[:,-1,:]  = self.rho2[:,-1,:]
+                self.rhoU1[:,0,:]  = self.rhoU2[:,0,:]
+                self.rhoU1[:,-1,:] = self.rhoU2[:,-1,:]
+                self.rhoV1[:,0,:]  = self.rhoV2[:,0,:]
+                self.rhoV1[:,-1,:] = self.rhoV2[:,-1,:] 
+                self.rhoW1[:,0,:]  = self.rhoW2[:,0,:]
+                self.rhoW1[:,-1,:] = self.rhoW2[:,-1,:]
+                self.rhoE1[:,0,:]  = self.rhoE2[:,0,:]
+                self.rhoE1[:,-1,:] = self.rhoE2[:,-1,:]     
+                
+            if self.bcZType == "DIRICHLET":
+                self.rho1[:,:,0]   = self.rho2[:,:,0]
+                self.rho1[:,:,-1]  = self.rho2[:,:,-1]
+                self.rhoU1[:,:,0]  = self.rhoU2[:,:,0]
+                self.rhoU1[:,:,-1] = self.rhoU2[:,:,-1]
+                self.rhoV1[:,:,0]  = self.rhoV2[:,:,0]
+                self.rhoV1[:,:,-1] = self.rhoV2[:,:,-1] 
+                self.rhoW1[:,:,0]  = self.rhoW2[:,:,0]
+                self.rhoW1[:,:,-1] = self.rhoW2[:,:,-1]
+                self.rhoE1[:,:,0]  = self.rhoE2[:,:,0]
+                self.rhoE1[:,:,-1] = self.rhoE2[:,:,-1]              
             
         else:
             self.rho1  = self.rho2
@@ -871,7 +1018,6 @@ class CSolver3D:
     def checkSolution(self):
         
         print(self.timeStep)
-        print(self.rhoV1[0,0,0])
         
         #Check if we've hit the end of the timestep condition
         if self.timeStep >= self.maxTimeStep:
@@ -883,7 +1029,6 @@ class CSolver3D:
             
         if(self.timeStep%self.plotStep == 0):
             drawnow(self.plotFigure)
-            print(self.timeStep)
             
         if((np.isnan(self.rhoE1)).any() == True or (np.isnan(self.rho1)).any() == True or (np.isnan(self.rhoU1)).any() == True or (np.isnan(self.rhoV1)).any() == True or (np.isnan(self.rhoW1)).any() == True):
             self.done = True

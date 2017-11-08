@@ -475,47 +475,34 @@ class CollocatedDeriv:
             print("Unknown direction")
 
 
-#    def calcNeumann0(self,f):
-#        
-#        if self.dir == "Y":
-#            f  = f.transpose()
-#        
-#        #6th order...
-#        alpha = 147
-#        a0 = 360
-#        a1 = -450
-#        a2 = 400
-#        a3 = -225
-#        a4 = 72
-#        a5 = -10
-#        
-#        f0 = (a0*f[1] + a1*f[2] + a2*f[3] + a3*f[4] + a4*f[5] + a5*f[6])/alpha
-#        
-#        if self.dir == "Y":
-#            return f0.transpose()
-#        elif self.dir == "X":
-#            return f0
-#
-#    def calcNeumannEnd(self,f):
-#        
-#        if self.dir == "Y":
-#            f  = f.transpose()       
-#        
-#        #6th order...
-#        alpha = 147
-#        a0 = 360
-#        a1 = -450
-#        a2 = 400
-#        a3 = -225
-#        a4 = 72
-#        a5 = -10
-#        
-#        fend = (a0*f[-2] + a1*f[-3] + a2*f[-4] + a3*f[-5] + a4*f[-6] + a5*f[-7])/alpha
-#        
-#        if self.dir == "Y":
-#            return fend.transpose()
-#        elif self.dir == "X":
-#            return fend
+    def calcNeumann0(self,f):
+        #6th order...
+        alpha = 147
+        a0 = 360
+        a1 = -450
+        a2 = 400
+        a3 = -225
+        a4 = 72
+        a5 = -10
+        
+        f0 = (a0*f[1] + a1*f[2] + a2*f[3] + a3*f[4] + a4*f[5] + a5*f[6])/alpha
+
+        return f0
+
+    def calcNeumannEnd(self,f):
+        
+        #6th order...
+        alpha = 147
+        a0 = 360
+        a1 = -450
+        a2 = 400
+        a3 = -225
+        a4 = 72
+        a5 = -10
+        
+        fend = (a0*f[-2] + a1*f[-3] + a2*f[-4] + a3*f[-5] + a4*f[-6] + a5*f[-7])/alpha
+
+        return fend
 
 
 ###################
