@@ -20,7 +20,8 @@ def cyclic2(a, b, bb, c, alpha, beta, r, n, u, x, z):
     bb[-1]  = b[-1]-alpha*beta/gamma
 
     x = sll.dgtsv(a,bb,c,r)[3]
-
+    
+    u[:] = 0.0
     u[0] = gamma
     u[-1] = alpha
 
@@ -435,42 +436,42 @@ class CollocatedDeriv:
             return sll.dgtsv(self.a2,self.b2,self.c2,spspar.csr_matrix.dot(self.RH2D,f))[3]
     
     def df_3D(self,f): 
-        
+        temp = np.zeros((self.Nx,self.Ny,self.Nz),dtype=np.double)
         if self.dir == "X":
             for j in range(self.Ny):
                 for k in range(self.Nz):
-                    self.temp[:,j,k] = self.compact1stDeriv_Fast(f[:,j,k])
-            return self.temp
+                    temp[:,j,k] = self.compact1stDeriv_Fast(f[:,j,k])
+            return temp
         elif self.dir == "Y":
             for i in range(self.Nx):
                 for k in range(self.Nz):
-                    self.temp[i,:,k] = self.compact1stDeriv_Fast(f[i,:,k])        
-            return self.temp      
+                    temp[i,:,k] = self.compact1stDeriv_Fast(f[i,:,k])        
+            return temp      
         elif self.dir == "Z":
             for i in range(self.Nx):
                 for j in range(self.Ny):
-                    self.temp[i,j,:] = self.compact1stDeriv_Fast(f[i,j,:])        
-            return self.temp           
+                    temp[i,j,:] = self.compact1stDeriv_Fast(f[i,j,:])        
+            return temp           
         else:
             print("Unknown direction")
 
     def d2f_3D(self,f): 
-        
+        temp = np.zeros((self.Nx,self.Ny,self.Nz),dtype=np.double)        
         if self.dir == "X":
             for j in range(self.Ny):
                 for k in range(self.Nz):
-                    self.temp[:,j,k] = self.compact2ndDeriv_Fast(f[:,j,k])
-            return self.temp
+                    temp[:,j,k] = self.compact2ndDeriv_Fast(f[:,j,k])
+            return temp
         elif self.dir == "Y":
             for i in range(self.Nx):
                 for k in range(self.Nz):
-                    self.temp[i,:,k] = self.compact2ndDeriv_Fast(f[i,:,k])        
-            return self.temp      
+                    temp[i,:,k] = self.compact2ndDeriv_Fast(f[i,:,k])        
+            return temp      
         elif self.dir == "Z":
             for i in range(self.Nx):
                 for j in range(self.Ny):
-                    self.temp[i,j,:] = self.compact2ndDeriv_Fast(f[i,j,:])        
-            return self.temp           
+                    temp[i,j,:] = self.compact2ndDeriv_Fast(f[i,j,:])        
+            return temp           
         else:
             print("Unknown direction")
 

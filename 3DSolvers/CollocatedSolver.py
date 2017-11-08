@@ -71,7 +71,7 @@ class CSolver3D:
         
         self.done = False
         
-        self.Uwall = 0.1
+        self.Uwall = 0.25
         
         #grid info
         self.Nx = domain.Nx
@@ -299,14 +299,17 @@ class CSolver3D:
             self.rhoU1[:,:,-1]  = 0.0
             self.rhoV1[:,:,-1]  = 0.0   
             self.rhoW1[:,:,-1]  = 0.0  
-            
-#            
-#        if self.bcY1 == "ADIABATIC_MOVINGWALL":
-#            self.T[:,-1]  = self.derivY.calcNeumannEnd(self.T)
-#            self.U[:,-1]  = self.Uwall
-#            self.rhoU1[:,-1]  = self.rho1[:,-1]*self.Uwall
-#            self.V[:,-1]  = 0.0
-#            self.rhoV1[:,-1]  = 0.0 
+                        
+        if self.bcY1 == "ADIABATIC_MOVINGWALL":
+            for ip in range(self.Nx):
+                for kp in range(self.Nz):
+                    self.T[ip,-1,kp]  = self.derivY.calcNeumannEnd(self.T[ip,:,kp])
+            self.U[:,-1,:]  = self.Uwall
+            self.V[:,-1,:]  = 0.0
+            self.W[:,-1,:]  = 0.0
+            self.rhoU1[:,-1,:]  = self.rho1[:,-1,:]*self.Uwall
+            self.rhoV1[:,-1,:]  = 0.0 
+            self.rhoW1[:,-1,:]  = 0.0 
 
         if (   self.bcX0 == "ADIABATIC_WALL" 
             or self.bcX1 == "ADIABATIC_WALL" 
@@ -432,14 +435,18 @@ class CSolver3D:
             self.p[:,:,-1]  = self.idealGas.solvePIdealGas(rho[:,:,-1],self.T[:,:,-1])
  
  
-#        if self.bcY1 == "ADIABATIC_MOVINGWALL":
-#            self.U[:,-1]  = self.Uwall
-#            rhoU[:,-1]    = rho[:,-1]*self.Uwall
-#            self.V[:,-1]  = 0.0
-#            rhoV[:,-1]    = 0.0
-#            self.T[:,-1]  = self.derivY.calcNeumannEnd(self.T[:,:])
-#            self.p[:,-1]  = self.idealGas.solvePIdealGas(rho[:,-1],self.T[:,-1])
-#    
+        if self.bcY1 == "ADIABATIC_MOVINGWALL":
+            for ip in range(self.Nx):
+                for kp in range(self.Nz):
+                    self.T[ip,-1,kp]  = self.derivY.calcNeumannEnd(self.T[ip,:,kp])
+            self.U[:,-1,:]  = self.Uwall
+            self.V[:,-1,:]  = 0.0
+            self.W[:,-1,:]  = 0.0
+            self.rhoU1[:,-1,:]  = self.rho1[:,-1,:]*self.Uwall
+            self.rhoV1[:,-1,:]  = 0.0 
+            self.rhoW1[:,-1,:]  = 0.0 
+            self.p[:,-1,:]  = self.idealGas.solvePIdealGas(rho[:,-1,:],self.T[:,-1,:])
+    
     
     def preStepDerivatives(self):
         
@@ -451,7 +458,7 @@ class CSolver3D:
         self.Uy = self.derivY.df_3D(self.U)
         self.Vy = self.derivY.df_3D(self.V)
         self.Wy = self.derivY.df_3D(self.W)
-        
+
         self.Uz = self.derivZ.df_3D(self.U)
         self.Vz = self.derivZ.df_3D(self.V)
         self.Wz = self.derivZ.df_3D(self.W)       
@@ -845,7 +852,7 @@ class CSolver3D:
     def filterConservedValues(self):
         if(self.timeStep%self.filterStep == 0):
             self.numberOfFilterStep += 1
-            
+
             #Need to flip the order of the filtering every other time
             if self.numberOfFilterStep%3 == 1:
                                 
@@ -1008,10 +1015,10 @@ class CSolver3D:
               
     
     def plotFigure(self):
-#        plt.plot(self.x,self.rho1[:,0,0])
+#        plt.plot(self.y,self.U[0,:,0],self.y,self.Uy[0,:,0])
 #        plt.imshow(np.rot90(self.Vx[1:-2,1:-2] - self.Uy[1:-2,1:-2]), cmap="RdBu",interpolation='bicubic')
 #        plt.imshow(np.rot90(self.Ux[1:-2,1:-2] + self.Ux[1:-2,1:-2]), cmap="RdBu",interpolation='bicubic')
-        plt.imshow(np.rot90(self.p[:,:,16]), cmap="RdBu",interpolation='bicubic')
+        plt.imshow(np.rot90(self.U[:,:,5]), cmap="RdBu",interpolation='bicubic')
         plt.colorbar()
         plt.axis("equal")
 
